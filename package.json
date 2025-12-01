@@ -1,0 +1,20 @@
+{
+  "name": "usdt-marketplace-bot",
+  "version": "1.0.0",
+  "description": "A Telegram-based peer-to-peer USDT marketplace bot",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ryuzaki1300/usdt-marketplace-bot.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ryuzaki1300/usdt-marketplace-bot/issues"
+  },
+  "homepage": "https://github.com/ryuzaki1300/usdt-marketplace-bot#readme"
+}
