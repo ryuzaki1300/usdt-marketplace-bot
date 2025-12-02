@@ -86,7 +86,7 @@ export async function handleOrderNetwork(ctx: MyContext, network: string) {
   ctx.session.orderWizard.step = "description";
 
   await ctx.reply(orderMessages.createOrder.enterDescription, {
-    reply_markup: orderKeyboards.cancelOrder(),
+    reply_markup: orderKeyboards.descriptionStep(),
   });
 }
 

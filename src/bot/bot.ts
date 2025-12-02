@@ -83,6 +83,11 @@ export function createBot(): Bot<MyContext> {
     await handleOrderCancel(ctx);
   });
 
+  bot.callbackQuery('order:skip_description', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await handleOrderDescription(ctx);
+  });
+
   // Handle text messages during order creation wizard
   bot.on('message:text', async (ctx) => {
     const wizard = ctx.session.orderWizard;

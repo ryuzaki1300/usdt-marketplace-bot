@@ -45,4 +45,11 @@ export const orderKeyboards = {
   cancelOrder: (): InlineKeyboard => {
     return new InlineKeyboard().text("❌ لغو", "order:cancel");
   },
+
+  descriptionStep: (): InlineKeyboard => {
+    return new InlineKeyboard()
+      .text("⏭️ رد کردن", "order:skip_description")
+      .row()
+      .text("❌ لغو", "order:cancel");
+  },
 };
