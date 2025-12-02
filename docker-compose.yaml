@@ -1,0 +1,13 @@
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - BOT_TOKEN=${BOT_TOKEN}
+      - CORE_API_KEY=${CORE_API_KEY}
+      - CORE_BASE_URL=${CORE_BASE_URL}
+      - PUBLIC_ORDER_CHANNEL_ID=${PUBLIC_ORDER_CHANNEL_ID}
+    env_file:
+      - .env
