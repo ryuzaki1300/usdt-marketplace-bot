@@ -11,6 +11,7 @@ import {
   handleOrderAmount,
   handleOrderPrice,
   handleOrderNetwork,
+  handleOrderNetworkDone,
   handleOrderDescription,
   handleOrderConfirm,
   handleOrderCancel,
@@ -67,9 +68,18 @@ export function createBot(): Bot<MyContext> {
     await handleOrderSide(ctx, side);
   });
 
+  bot.callbackQuery('order:network:done', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await handleOrderNetworkDone(ctx);
+  });
+
   bot.callbackQuery(/^order:network:(.+)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
     const network = ctx.match[1];
+    // Skip if it's the "done" button (already handled above)
+    if (network === 'done') {
+      return;
+    }
     await handleOrderNetwork(ctx, network);
   });
 

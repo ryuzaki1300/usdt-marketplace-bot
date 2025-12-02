@@ -71,9 +71,10 @@ export async function handleOrderPrice(ctx: MyContext, priceText: string) {
 
   ctx.session.orderWizard.price = price;
   ctx.session.orderWizard.step = "network";
+  ctx.session.orderWizard.network = ""; // Initialize network string
 
   await ctx.reply(orderMessages.createOrder.enterNetwork, {
-    reply_markup: orderKeyboards.chooseNetwork(),
+    reply_markup: orderKeyboards.chooseNetwork(""),
   });
 }
 
@@ -82,10 +83,59 @@ export async function handleOrderNetwork(ctx: MyContext, network: string) {
     return;
   }
 
-  ctx.session.orderWizard.network = network;
+  // Handle "no difference" - clicking it immediately goes to next step
+  if (network === "no_difference") {
+    ctx.session.orderWizard.network = "فرقی نداره";
+    ctx.session.orderWizard.step = "description";
+
+    await ctx.editMessageText(orderMessages.createOrder.enterDescription, {
+      reply_markup: orderKeyboards.descriptionStep(),
+    });
+    return;
+  }
+
+  // Handle regular networks - only single selection (toggle)
+  // Initialize network string if not exists
+  if (!ctx.session.orderWizard.network) {
+    ctx.session.orderWizard.network = "";
+  }
+
+  const currentNetwork = ctx.session.orderWizard.network;
+
+  // For single network selection, toggle the selected network
+  if (currentNetwork === network) {
+    // Deselect if already selected
+    ctx.session.orderWizard.network = "";
+  } else {
+    // Select this network (replace any previous selection)
+    ctx.session.orderWizard.network = network;
+  }
+
+  // Update the keyboard to show current selection
+  await ctx.editMessageReplyMarkup({
+    reply_markup: orderKeyboards.chooseNetwork(
+      ctx.session.orderWizard.network
+    ),
+  });
+}
+
+export async function handleOrderNetworkDone(ctx: MyContext) {
+  if (!ctx.session.orderWizard || ctx.session.orderWizard.step !== "network") {
+    return;
+  }
+
+  // Validate that at least one network is selected
+  if (!ctx.session.orderWizard.network || ctx.session.orderWizard.network.trim() === "") {
+    await ctx.answerCallbackQuery({
+      text: "لطفاً حداقل یک شبکه را انتخاب کنید",
+      show_alert: true,
+    });
+    return;
+  }
+
   ctx.session.orderWizard.step = "description";
 
-  await ctx.reply(orderMessages.createOrder.enterDescription, {
+  await ctx.editMessageText(orderMessages.createOrder.enterDescription, {
     reply_markup: orderKeyboards.descriptionStep(),
   });
 }
@@ -152,14 +202,27 @@ export async function handleOrderConfirm(ctx: MyContext) {
     // Clear wizard state
     ctx.session.orderWizard = undefined;
 
-    // Get user role for main menu
-    const user = await coreClient.getUserProfile(userId);
-    const role = (user as any)?.role;
-    const isAdmin = role === "admin" || role === "super_admin";
+    // Show success message and redirect to my_orders
+    await ctx.editMessageText(orderMessages.createOrder.success);
+    
+    // Send my_orders as a new message
+    try {
+      const response = await coreClient.getUserOrders(userId);
+      const orders = response.data || [];
 
-    await ctx.editMessageText(orderMessages.createOrder.success, {
-      reply_markup: getMainMenuKeyboard(isAdmin),
-    });
+      if (orders.length === 0) {
+        await ctx.reply(orderMessages.myOrders.noOrders, {
+          reply_markup: orderKeyboards.myOrdersEmpty(),
+        });
+      } else {
+        await ctx.reply(orderMessages.myOrders.orderList(orders), {
+          reply_markup: orderKeyboards.myOrders(),
+        });
+      }
+    } catch (error: any) {
+      // If fetching orders fails, just show success message
+      // Error is already handled
+    }
   } catch (error: any) {
     await ctx.editMessageText(
       error.message || orderMessages.createOrder.error,

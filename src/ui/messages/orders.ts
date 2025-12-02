@@ -34,7 +34,7 @@ export const orderMessages = {
     chooseSide: "لطفاً نوع سفارش را انتخاب کنید:",
     enterAmount: "مقدار USDT را وارد کنید:",
     enterPrice: "قیمت هر واحد (تومان) را وارد کنید:",
-    enterNetwork: "شبکه را انتخاب کنید:",
+    enterNetwork: "شبکه(ها) را انتخاب کنید (می‌توانید چند مورد انتخاب کنید):",
     enterDescription: "توضیحات اختیاری را وارد کنید یا دکمه «رد کردن» را بزنید:",
     summary: (wizard: {
       side: "buy" | "sell";

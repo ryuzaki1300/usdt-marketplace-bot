@@ -4,7 +4,7 @@ export interface SessionData {
     side?: "buy" | "sell";
     amount?: number;
     price?: number;
-    network?: string;
+    network?: string; // Comma-separated networks or "فرقی نداره"
     description?: string;
     step?:
       | "side"
