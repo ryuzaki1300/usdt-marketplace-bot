@@ -19,18 +19,13 @@ export async function handleMyOrders(ctx: MyContext) {
     const response = await coreClient.getUserOrders(userId);
     const orders = response.data || [];
 
-    // Get user role for keyboard
-    const user = await coreClient.getUserProfile(userId);
-    const role = (user as any)?.role;
-    const isAdmin = role === "admin" || role === "super_admin";
-
     if (orders.length === 0) {
       await ctx.editMessageText(orderMessages.myOrders.noOrders, {
-        reply_markup: orderKeyboards.myOrdersEmpty(isAdmin),
+        reply_markup: orderKeyboards.myOrdersEmpty(),
       });
     } else {
       await ctx.editMessageText(orderMessages.myOrders.orderList(orders), {
-        reply_markup: orderKeyboards.myOrders(isAdmin),
+        reply_markup: orderKeyboards.myOrders(),
       });
     }
   } catch (error: any) {

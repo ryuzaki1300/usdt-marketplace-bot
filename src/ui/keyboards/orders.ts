@@ -3,14 +3,14 @@ import { getMainMenuKeyboard } from "./mainMenu";
 
 // Order-related keyboards
 export const orderKeyboards = {
-  myOrdersEmpty: (isAdmin: boolean = false): InlineKeyboard => {
+  myOrdersEmpty: (): InlineKeyboard => {
     return new InlineKeyboard()
       .text("➕ سفارش جدید", "order:create")
       .row()
       .text("🔙 بازگشت به منوی اصلی", "menu:main");
   },
 
-  myOrders: (isAdmin: boolean = false): InlineKeyboard => {
+  myOrders: (): InlineKeyboard => {
     return new InlineKeyboard()
       .text("➕ سفارش جدید", "order:create")
       .row()
