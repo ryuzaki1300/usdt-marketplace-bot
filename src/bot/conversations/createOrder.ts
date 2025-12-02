@@ -4,6 +4,7 @@ import { orderMessages } from "../../ui/messages/orders";
 import { orderKeyboards } from "../../ui/keyboards/orders";
 import { coreClient } from "../../core/coreClient";
 import { getMainMenuKeyboard } from "../../ui/keyboards/mainMenu";
+import { validateNumberInput } from "../../utils/numberParser";
 
 type MyContext = Context & SessionFlavor<SessionData>;
 
@@ -43,8 +44,8 @@ export async function handleOrderAmount(ctx: MyContext, amountText: string) {
     return;
   }
 
-  const amount = parseFloat(amountText);
-  if (isNaN(amount) || amount <= 0) {
+  const { isValid, number: amount } = validateNumberInput(amountText);
+  if (!isValid) {
     await ctx.reply(orderMessages.createOrder.invalidAmount);
     return;
   }
@@ -62,8 +63,8 @@ export async function handleOrderPrice(ctx: MyContext, priceText: string) {
     return;
   }
 
-  const price = parseFloat(priceText);
-  if (isNaN(price) || price <= 0) {
+  const { isValid, number: price } = validateNumberInput(priceText);
+  if (!isValid) {
     await ctx.reply(orderMessages.createOrder.invalidPrice);
     return;
   }
@@ -104,9 +105,23 @@ export async function handleOrderDescription(
     ctx.session.orderWizard.description = description.trim();
   }
 
+  // Validate that required fields are present
+  const wizard = ctx.session.orderWizard;
+  if (!wizard.side || !wizard.amount || !wizard.price) {
+    await ctx.reply("خطا در پردازش اطلاعات. لطفاً دوباره شروع کنید.");
+    ctx.session.orderWizard = undefined;
+    return;
+  }
+
   ctx.session.orderWizard.step = "summary";
 
-  const summary = orderMessages.createOrder.summary(ctx.session.orderWizard);
+  const summary = orderMessages.createOrder.summary({
+    side: wizard.side,
+    amount: wizard.amount,
+    price: wizard.price,
+    network: wizard.network,
+    description: wizard.description,
+  });
   await ctx.reply(summary, {
     reply_markup: orderKeyboards.confirmOrder(),
   });
