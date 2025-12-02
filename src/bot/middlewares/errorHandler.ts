@@ -1,6 +1,5 @@
 import { MiddlewareFn, Context } from 'grammy';
 import { ApiError } from '../../core/coreClient';
-import { commonMessages } from '../../ui/messages/common';
 
 export const errorHandlerMiddleware: MiddlewareFn<Context> = async (ctx, next) => {
   try {
@@ -8,28 +7,15 @@ export const errorHandlerMiddleware: MiddlewareFn<Context> = async (ctx, next) =
   } catch (error) {
     console.error('Error in middleware:', error);
 
-    let message = commonMessages.error.generic;
+    let message = 'An error occurred. Please try again later.';
 
-    if (error && typeof error === 'object' && 'type' in error) {
+    // Show server error message directly to user
+    if (error && typeof error === 'object' && 'message' in error) {
       const apiError = error as ApiError;
-
-      switch (apiError.type) {
-        case 'KYC_VERIFICATION_REQUIRED':
-          message = commonMessages.error.kycRequired;
-          break;
-        case 'USER_ACCOUNT_BLOCKED':
-          message = commonMessages.error.userBlocked;
-          break;
-        case 'NOT_FOUND':
-          message = commonMessages.error.notFound;
-          break;
-        case 'ROLE_REQUIRED':
-        case 'AUTHENTICATION_REQUIRED':
-          message = commonMessages.error.unauthorized;
-          break;
-        default:
-          message = apiError.message || commonMessages.error.generic;
-      }
+      message = apiError.message || message;
+    } else if (error instanceof Error) {
+      // For non-API errors, log but show generic message
+      message = 'An unexpected error occurred. Please try again later.';
     }
 
     try {

@@ -3,7 +3,6 @@ import { env } from '../config/env';
 import { SessionData } from '../types/session';
 import { loggerMiddleware } from './middlewares/logger';
 import { errorHandlerMiddleware } from './middlewares/errorHandler';
-import { roleDetectionMiddleware } from './middlewares/roleDetection';
 import { handleStart } from './handlers/start';
 
 // Extend Grammy session type
@@ -22,7 +21,6 @@ export function createBot(): Bot<MyContext> {
   // Apply middlewares in order
   bot.use(loggerMiddleware);
   bot.use(errorHandlerMiddleware);
-  bot.use(roleDetectionMiddleware);
 
   // Register command handlers
   bot.command('start', handleStart);
