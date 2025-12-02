@@ -1,5 +1,5 @@
-import axios, { AxiosInstance, AxiosError } from 'axios';
-import { env } from '../config/env';
+import axios, { AxiosInstance, AxiosError } from "axios";
+import { env } from "../config/env";
 
 export interface ApiError {
   statusCode: number;
@@ -16,8 +16,8 @@ export class CoreClient {
     this.client = axios.create({
       baseURL: env.CORE_BASE_URL,
       headers: {
-        'x-api-key': env.CORE_API_KEY,
-        'Content-Type': 'application/json',
+        "x-api-key": env.CORE_API_KEY,
+        "Content-Type": "application/json",
       },
     });
   }
@@ -26,7 +26,7 @@ export class CoreClient {
    * Make a request to the Core API with user context
    */
   async request<T>(
-    method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
+    method: "GET" | "POST" | "PATCH" | "DELETE",
     endpoint: string,
     options?: {
       data?: any;
@@ -38,11 +38,11 @@ export class CoreClient {
       const headers: Record<string, string> = {};
 
       if (options?.telegramUserId) {
-        headers['x-telegram-user-id'] = options.telegramUserId.toString();
+        headers["x-telegram-user-id"] = options.telegramUserId.toString();
       }
 
       if (options?.telegramChatId) {
-        headers['x-telegram-chat-id'] = options.telegramChatId.toString();
+        headers["x-telegram-chat-id"] = options.telegramChatId.toString();
       }
 
       const response = await this.client.request<T>({
@@ -60,11 +60,12 @@ export class CoreClient {
           throw axiosError.response.data;
         }
       }
+
       throw {
         statusCode: 500,
-        message: 'An unexpected error occurred',
-        error: 'Internal Server Error',
-        type: 'UNKNOWN_ERROR',
+        message: "خطای غیرمنتظره‌ای رخ داد. لطفاً بعداً دوباره تلاش کنید.",
+        error: "UNKNOWN_ERROR",
+        type: "UNKNOWN_ERROR",
       } as ApiError;
     }
   }
@@ -72,19 +73,32 @@ export class CoreClient {
   /**
    * Get user by Telegram ID
    */
-  async getUserByTelegramId(telegramUserId: number) {
-    return this.request('GET', `/users/telegram/${telegramUserId}`);
+  async getUserProfile(telegramUserId: number) {
+    return this.request("GET", `/users/me/profile`, {
+      telegramUserId,
+    });
+  }
+
+  /**
+   * Create a new user
+   */
+  async createUser(telegramUserId: number, telegramUsername: string) {
+    return this.request("POST", `/users`, {
+      data: {
+        telegram_user_id: telegramUserId,
+        telegram_username: telegramUsername,
+      },
+    });
   }
 
   /**
    * Get current user profile
    */
   async getCurrentUserProfile(telegramUserId: number) {
-    return this.request('GET', '/users/me/profile', {
+    return this.request("GET", "/users/me/profile", {
       telegramUserId,
     });
   }
 }
 
 export const coreClient = new CoreClient();
-

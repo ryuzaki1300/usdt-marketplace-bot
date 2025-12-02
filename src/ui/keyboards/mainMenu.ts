@@ -2,16 +2,16 @@ import { InlineKeyboard } from "grammy";
 
 export function getMainMenuKeyboard(isAdmin: boolean = false): InlineKeyboard {
   const keyboard = new InlineKeyboard()
-    .text("📦 My Orders", "menu:my_orders")
+    .text("📦 سفارش‌های من", "menu:my_orders")
     .row()
-    .text("💼 My Offers", "menu:my_offers")
+    .text("💼 پیشنهادهای من", "menu:my_offers")
     .row()
-    .text("➕ New Order", "menu:new_order")
+    .text("➕ سفارش جدید", "menu:new_order")
     .row()
-    .text("👤 Profile", "menu:profile");
+    .text("👤 پروفایل", "menu:profile");
 
   if (isAdmin) {
-    keyboard.row().text("⚙️ Admin Menu", "menu:admin");
+    keyboard.row().text("⚙️ منوی مدیریت", "menu:admin");
   }
 
   return keyboard;

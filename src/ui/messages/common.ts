@@ -1,7 +1,7 @@
 export const commonMessages = {
   welcome: (firstName?: string) =>
-    `👋 Welcome${firstName ? `, ${firstName}` : ''}!\n\n` +
-    `This is the USDT Marketplace Bot. You can safely trade USDT in a peer-to-peer manner.\n\n` +
-    `Use the menu below to get started.`,
+    `👋 خوش آمدید${firstName ? ` ${firstName}` : ''}!\n\n` +
+    `این ربات بازار معاملات USDT است. شما می‌توانید به صورت همتا به همتا و با امنیت کامل USDT معامله کنید.\n\n` +
+    `از منوی زیر برای شروع استفاده کنید.`,
 };
 

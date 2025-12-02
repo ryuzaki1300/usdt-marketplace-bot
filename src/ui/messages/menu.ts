@@ -1,4 +1,4 @@
 export const menuMessages = {
-  mainMenu: '📋 Main Menu\n\nSelect an option:',
+  mainMenu: '📋 منوی اصلی\n\nیک گزینه را انتخاب کنید:',
 };
 

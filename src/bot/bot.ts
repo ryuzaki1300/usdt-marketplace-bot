@@ -29,27 +29,27 @@ export function createBot(): Bot<MyContext> {
   // These will be implemented in future tasks
   bot.callbackQuery('menu:my_orders', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await ctx.editMessageText('My Orders feature coming soon!');
+    await ctx.editMessageText('قابلیت سفارش‌های من به زودی اضافه می‌شود!');
   });
 
   bot.callbackQuery('menu:my_offers', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await ctx.editMessageText('My Offers feature coming soon!');
+    await ctx.editMessageText('قابلیت پیشنهادهای من به زودی اضافه می‌شود!');
   });
 
   bot.callbackQuery('menu:new_order', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await ctx.editMessageText('New Order feature coming soon!');
+    await ctx.editMessageText('قابلیت سفارش جدید به زودی اضافه می‌شود!');
   });
 
   bot.callbackQuery('menu:profile', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await ctx.editMessageText('Profile feature coming soon!');
+    await ctx.editMessageText('قابلیت پروفایل به زودی اضافه می‌شود!');
   });
 
   bot.callbackQuery('menu:admin', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await ctx.editMessageText('Admin Menu feature coming soon!');
+    await ctx.editMessageText('قابلیت منوی مدیریت به زودی اضافه می‌شود!');
   });
 
   return bot;
