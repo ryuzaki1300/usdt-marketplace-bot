@@ -99,6 +99,57 @@ export class CoreClient {
       telegramUserId,
     });
   }
+
+  /**
+   * Get user orders
+   * First gets the user profile to get internal user ID, then fetches orders
+   */
+  async getUserOrders(telegramUserId: number, page: number = 1, limit: number = 10) {
+    // Get user profile to get internal user ID
+    const user = await this.getUserProfile(telegramUserId);
+    const userId = (user as any)?.id;
+    
+    if (!userId) {
+      throw {
+        statusCode: 404,
+        message: "کاربر یافت نشد.",
+        error: "USER_NOT_FOUND",
+        type: "USER_NOT_FOUND",
+      } as ApiError;
+    }
+
+    // Use query parameter approach as it's more flexible
+    return this.request<{
+      data: any[];
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    }>("GET", `/orders?maker_id=${userId}&page=${page}&limit=${limit}`, {
+      telegramUserId,
+    });
+  }
+
+  /**
+   * Create a new order
+   */
+  async createOrder(
+    telegramUserId: number,
+    data: {
+      side: 'buy' | 'sell';
+      amount_usdt: number;
+      price_per_unit: number;
+      network?: string;
+      description?: string;
+    }
+  ) {
+    return this.request("POST", "/orders", {
+      telegramUserId,
+      data,
+    });
+  }
 }
 
 export const coreClient = new CoreClient();
