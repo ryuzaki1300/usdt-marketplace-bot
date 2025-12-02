@@ -12,10 +12,9 @@ export async function handleStart(ctx: CommandContext<MyContext>) {
   const firstName = ctx.from?.first_name;
 
   if (!userId) {
-    await ctx.reply('Unable to identify user. Please try again.');
+    await ctx.reply('Unable to identify user. Please try again');
     return;
   }
-  console.log(' asda sda sd asd asd ', userId);
 
   // Get user info from Core (server will handle user creation if needed)
   // This also checks user role for admin menu visibility

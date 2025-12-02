@@ -3,6 +3,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    volumes:
+      # Mount source code for hot reload - changes will be reflected immediately
+      - ./src:/app/src
+      - ./package.json:/app/package.json
+      - ./tsconfig.json:/app/tsconfig.json
+      # Exclude node_modules from mount - use container's node_modules
+      # This prevents issues with native modules and platform differences
     environment:
       - NODE_ENV=${NODE_ENV}
       - BOT_TOKEN=${BOT_TOKEN}
