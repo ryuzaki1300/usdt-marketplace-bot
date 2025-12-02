@@ -107,12 +107,6 @@ export function createBot(): Bot<MyContext> {
 
     const text = ctx.message.text;
 
-    // Handle /skip for optional description
-    if (text === '/skip' && wizard.step === 'description') {
-      await handleOrderDescription(ctx);
-      return;
-    }
-
     // Handle wizard steps
     switch (wizard.step) {
       case 'amount':
