@@ -3,6 +3,7 @@ import { env } from '../config/env';
 import { SessionData } from '../types/session';
 import { loggerMiddleware } from './middlewares/logger';
 import { errorHandlerMiddleware } from './middlewares/errorHandler';
+import { userDataMiddleware, getUserData } from './middlewares/userData';
 import { handleStart } from './handlers/start';
 import { handleMyOrders } from './handlers/orders';
 import {
@@ -16,7 +17,6 @@ import {
   handleOrderConfirm,
   handleOrderCancel,
 } from './conversations/createOrder';
-import { coreClient } from '../core/coreClient';
 import { commonMessages } from '../ui/messages/common';
 import { getMainMenuKeyboard } from '../ui/keyboards/mainMenu';
 
@@ -35,6 +35,7 @@ export function createBot(): Bot<MyContext> {
 
   // Apply middlewares in order
   bot.use(loggerMiddleware);
+  bot.use(userDataMiddleware);
   bot.use(errorHandlerMiddleware);
 
   // Register command handlers
@@ -133,14 +134,16 @@ export function createBot(): Bot<MyContext> {
       return;
     }
 
-    try {
-      const user = await coreClient.getUserProfile(userId);
+    // Use cached user data from middleware
+    const user = getUserData(ctx);
+    if (user) {
       const role = (user as any)?.role;
       const isAdmin = role === "admin" || role === "super_admin";
       await ctx.editMessageText(commonMessages.welcome(ctx.from?.first_name), {
         reply_markup: getMainMenuKeyboard(isAdmin),
       });
-    } catch {
+    } else {
+      // Fallback if user data not available
       await ctx.editMessageText(commonMessages.welcome(ctx.from?.first_name), {
         reply_markup: getMainMenuKeyboard(false),
       });

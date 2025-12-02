@@ -5,6 +5,9 @@ import { orderKeyboards } from "../../ui/keyboards/orders";
 import { coreClient } from "../../core/coreClient";
 import { getMainMenuKeyboard } from "../../ui/keyboards/mainMenu";
 import { validateNumberInput } from "../../utils/numberParser";
+import { getUserData } from "../middlewares/userData";
+import { kycMessages } from "../../ui/messages/kyc";
+import { getKycRequiredKeyboard } from "../../ui/keyboards/kyc";
 
 type MyContext = Context & SessionFlavor<SessionData>;
 
@@ -12,6 +15,15 @@ export async function handleOrderCreate(ctx: MyContext) {
   const userId = ctx.from?.id;
   if (!userId) {
     await ctx.reply("شناسایی کاربر امکان‌پذیر نیست.");
+    return;
+  }
+
+  const user = getUserData(ctx);
+  console.log(user)
+  if (user.kyc_status !== 'approved') {
+    await ctx.reply(kycMessages.kycRequired, {
+      reply_markup: getKycRequiredKeyboard(),
+    });
     return;
   }
 

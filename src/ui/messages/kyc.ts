@@ -1,5 +1,7 @@
 // KYC-related messages
 export const kycMessages = {
-  // Placeholder - to be implemented
+  kycRequired: "⚠️ احراز هویت لازم است\n\n" +
+    "برای ایجاد سفارش، شما باید احراز هویت خود را تکمیل کنید.\n\n" +
+    "لطفاً از طریق منوی پروفایل، درخواست احراز هویت خود را ارسال کنید.",
 };
 
