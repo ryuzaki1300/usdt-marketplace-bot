@@ -7,12 +7,12 @@ interface EnvConfig {
   BOT_TOKEN: string;
   CORE_API_KEY: string;
   CORE_BASE_URL: string;
-  PUBLIC_ORDER_CHANNEL_ID: string;
+  PUBLIC_ORDER_CHANNEL: string;
   NODE_ENV: string;
 }
 
 function validateEnv(): EnvConfig {
-  const required = ['BOT_TOKEN', 'CORE_API_KEY', 'CORE_BASE_URL', 'PUBLIC_ORDER_CHANNEL_ID'];
+  const required = ['BOT_TOKEN', 'CORE_API_KEY', 'CORE_BASE_URL', 'PUBLIC_ORDER_CHANNEL'];
   const missing: string[] = [];
 
   for (const key of required) {
@@ -32,7 +32,7 @@ function validateEnv(): EnvConfig {
     BOT_TOKEN: process.env.BOT_TOKEN!,
     CORE_API_KEY: process.env.CORE_API_KEY!,
     CORE_BASE_URL: process.env.CORE_BASE_URL!,
-    PUBLIC_ORDER_CHANNEL_ID: process.env.PUBLIC_ORDER_CHANNEL_ID!,
+    PUBLIC_ORDER_CHANNEL: process.env.PUBLIC_ORDER_CHANNEL!,
     NODE_ENV: process.env.NODE_ENV || 'development',
   };
 }

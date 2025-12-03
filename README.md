@@ -191,7 +191,7 @@ Every order created by a user is automatically posted to a public Telegram chann
 The channel ID must be configured inside `.env`:
 
 ```env
-PUBLIC_ORDER_CHANNEL_ID=-1001234567890
+PUBLIC_ORDER_CHANNEL=-1001234567890
 ```
 
 If posting fails, the bot logs the error but still confirms order creation.
@@ -210,7 +210,7 @@ The bot communicates with the Core Backend using HTTP requests with headers:
 ```env
 CORE_API_KEY=your_key
 CORE_BASE_URL=https://your-core-app.com
-PUBLIC_ORDER_CHANNEL_ID=-1001234567890
+PUBLIC_ORDER_CHANNEL=-1001234567890
 ```
 
 ### Core Documentation
