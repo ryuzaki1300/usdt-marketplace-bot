@@ -3,29 +3,29 @@ export const orderMessages = {
   myOrders: {
     title: "📦 سفارش‌های من",
     noOrders: "شما هنوز سفارشی ثبت نکرده‌اید.",
-    orderList: (orders: any[]) => {
-      if (orders.length === 0) {
-        return orderMessages.myOrders.noOrders;
+    header: (total: number) => `📦 سفارش‌های شما (${total} سفارش):\n`,
+    singleOrder: (order: any, index: number) => {
+      const side = order.side === "buy" ? "🟢 خرید" : "🔴 فروش";
+      const status =
+        order.status === "open"
+          ? "✅ باز"
+          : order.status === "matched"
+          ? "✅ تطبیق شده"
+          : "❌ لغو شده";
+      
+      let message = `📋 سفارش ${index + 1}\n\n`;
+      message += `نوع: ${side}\n`;
+      message += `مقدار: ${order.amount_usdt} USDT\n`;
+      message += `قیمت: ${order.price_per_unit.toLocaleString()} تومان\n`;
+      message += `قیمت کل: ${(order.amount_usdt * order.price_per_unit).toLocaleString()} تومان\n`;
+      message += `وضعیت: ${status}\n`;
+      if (order.network) {
+        message += `شبکه: ${order.network}\n`;
       }
-
-      let message = "📦 سفارش‌های شما:\n\n";
-      orders.forEach((order, index) => {
-        const side = order.side === "buy" ? "🟢 خرید" : "🔴 فروش";
-        const status =
-          order.status === "open"
-            ? "✅ باز"
-            : order.status === "matched"
-            ? "✅ تطبیق شده"
-            : "❌ لغو شده";
-        message += `${index + 1}. ${side} - ${order.amount_usdt} USDT\n`;
-        message += `   قیمت: ${order.price_per_unit} تومان\n`;
-        message += `   وضعیت: ${status}\n`;
-        if (order.network) {
-          message += `   شبکه: ${order.network}\n`;
-        }
-        message += `\n`;
-      });
-
+      if (order.description) {
+        message += `توضیحات: ${order.description}\n`;
+      }
+      
       return message;
     },
   },
@@ -64,5 +64,78 @@ export const orderMessages = {
     invalidAmount: "❌ مقدار نامعتبر است. لطفاً یک عدد مثبت وارد کنید.",
     invalidPrice: "❌ قیمت نامعتبر است. لطفاً یک عدد مثبت وارد کنید.",
     cancelled: "❌ ایجاد سفارش لغو شد.",
+  },
+
+  orderDetails: {
+    title: (order: any, isSuperAdmin: boolean = false) => {
+      const side = order.side === "buy" ? "🟢 خرید" : "🔴 فروش";
+      const status =
+        order.status === "open"
+          ? "✅ باز"
+          : order.status === "matched"
+          ? "✅ تطبیق شده"
+          : "❌ لغو شده";
+      
+      let message = `📋 جزئیات سفارش\n\n`;
+      
+      // Only show ID to super admin
+      if (isSuperAdmin) {
+        message += `شناسه: #${order.id}\n`;
+      }
+      
+      message += `نوع: ${side}\n`;
+      message += `مقدار: ${order.amount_usdt} USDT\n`;
+      message += `قیمت هر واحد: ${order.price_per_unit.toLocaleString()} تومان\n`;
+      message += `قیمت کل: ${(order.amount_usdt * order.price_per_unit).toLocaleString()} تومان\n`;
+      message += `وضعیت: ${status}\n`;
+      
+      if (order.network) {
+        message += `شبکه: ${order.network}\n`;
+      }
+      
+      if (order.description) {
+        message += `توضیحات: ${order.description}\n`;
+      }
+      
+      if (order.created_at) {
+        const date = new Date(order.created_at);
+        message += `تاریخ ایجاد: ${date.toLocaleDateString("fa-IR")}\n`;
+      }
+      
+      return message;
+    },
+    
+    offers: (offers: any[]) => {
+      if (offers.length === 0) {
+        return "\n\n📭 هیچ پیشنهادی برای این سفارش وجود ندارد.";
+      }
+      
+      let message = `\n\n📨 پیشنهادها (${offers.length}):\n\n`;
+      
+      offers.forEach((offer, index) => {
+        const status =
+          offer.status === "pending_maker_decision"
+            ? "⏳ در انتظار تصمیم"
+            : offer.status === "accepted_by_maker"
+            ? "✅ پذیرفته شده"
+            : offer.status === "rejected_by_maker"
+            ? "❌ رد شده"
+            : "❌ لغو شده";
+        
+        message += `${index + 1}. پیشنهاد #${offer.id}\n`;
+        message += `   قیمت: ${offer.price_per_unit.toLocaleString()} تومان\n`;
+        message += `   وضعیت: ${status}\n`;
+        if (offer.comment) {
+          message += `   نظر: ${offer.comment}\n`;
+        }
+        message += `\n`;
+      });
+      
+      return message;
+    },
+    
+    cancelSuccess: "✅ سفارش با موفقیت لغو شد.",
+    cancelError: "❌ خطا در لغو سفارش. لطفاً دوباره تلاش کنید.",
+    notFound: "❌ سفارش یافت نشد.",
   },
 };

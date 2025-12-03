@@ -10,11 +10,25 @@ export const orderKeyboards = {
       .text("🔙 بازگشت به منوی اصلی", "menu:main");
   },
 
-  myOrders: (): InlineKeyboard => {
+  myOrdersHeader: (): InlineKeyboard => {
     return new InlineKeyboard()
       .text("➕ سفارش جدید", "order:create")
       .row()
       .text("🔙 بازگشت به منوی اصلی", "menu:main");
+  },
+
+  singleOrder: (order: any): InlineKeyboard => {
+    const keyboard = new InlineKeyboard();
+    
+    // View details button
+    keyboard.text("📋 مشاهده جزئیات", `order:view:${order.id}`).row();
+    
+    // Cancel button only if order is open
+    if (order.status === "open") {
+      keyboard.text("❌ لغو سفارش", `order:cancel_order:${order.id}`).row();
+    }
+    
+    return keyboard;
   },
 
   chooseSide: (): InlineKeyboard => {
@@ -82,5 +96,18 @@ export const orderKeyboards = {
       .text("⏭️ رد کردن", "order:skip_description")
       .row()
       .text("❌ لغو", "order:cancel");
+  },
+
+  orderDetails: (order: any): InlineKeyboard => {
+    const keyboard = new InlineKeyboard();
+    
+    // Only show cancel button if order is open
+    if (order.status === "open") {
+      keyboard.text("❌ لغو سفارش", `order:cancel_order:${order.id}`).row();
+    }
+    
+    keyboard.text("🔙 بازگشت به لیست سفارش‌ها", "order:my_orders");
+    
+    return keyboard;
   },
 };

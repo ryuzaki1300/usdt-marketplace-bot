@@ -5,7 +5,7 @@ import { loggerMiddleware } from './middlewares/logger';
 import { errorHandlerMiddleware } from './middlewares/errorHandler';
 import { userDataMiddleware, getUserData } from './middlewares/userData';
 import { handleStart } from './handlers/start';
-import { handleMyOrders } from './handlers/orders';
+import { handleMyOrders, handleOrderDetails, handleCancelOrder } from './handlers/orders';
 import {
   handleOrderCreate,
   handleOrderSide,
@@ -45,6 +45,23 @@ export function createBot(): Bot<MyContext> {
   bot.callbackQuery('menu:my_orders', async (ctx) => {
     await ctx.answerCallbackQuery();
     await handleMyOrders(ctx);
+  });
+
+  bot.callbackQuery('order:my_orders', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await handleMyOrders(ctx);
+  });
+
+  bot.callbackQuery(/^order:view:(\d+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const orderId = parseInt(ctx.match[1], 10);
+    await handleOrderDetails(ctx, orderId);
+  });
+
+  bot.callbackQuery(/^order:cancel_order:(\d+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const orderId = parseInt(ctx.match[1], 10);
+    await handleCancelOrder(ctx, orderId);
   });
 
   bot.callbackQuery('menu:my_offers', async (ctx) => {

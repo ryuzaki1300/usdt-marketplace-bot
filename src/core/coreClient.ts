@@ -150,6 +150,41 @@ export class CoreClient {
       data,
     });
   }
+
+  /**
+   * Get order by ID
+   */
+  async getOrderById(orderId: number, telegramUserId?: number) {
+    return this.request("GET", `/orders/${orderId}`, {
+      telegramUserId,
+    });
+  }
+
+  /**
+   * Get offers for an order
+   */
+  async getOrderOffers(orderId: number, telegramUserId?: number, page: number = 1, limit: number = 100) {
+    return this.request<{
+      data: any[];
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    }>("GET", `/order-offers?order_id=${orderId}&page=${page}&limit=${limit}`, {
+      telegramUserId,
+    });
+  }
+
+  /**
+   * Cancel an order
+   */
+  async cancelOrder(orderId: number, telegramUserId: number) {
+    return this.request("POST", `/orders/${orderId}/cancel`, {
+      telegramUserId,
+    });
+  }
 }
 
 export const coreClient = new CoreClient();
