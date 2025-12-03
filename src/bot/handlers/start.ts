@@ -4,6 +4,7 @@ import { commonMessages } from "../../ui/messages/common";
 import { getMainMenuKeyboard } from "../../ui/keyboards/mainMenu";
 import { SessionData } from "../../types/session";
 import { SessionFlavor } from "grammy";
+import { handleOfferCreate } from "../conversations/createOffer";
 
 type MyContext = Context & SessionFlavor<SessionData>;
 
@@ -14,6 +15,21 @@ export async function handleStart(ctx: CommandContext<MyContext>) {
   if (!userId) {
     await ctx.reply("شناسایی کاربر امکان‌پذیر نیست. لطفاً دوباره تلاش کنید.");
     return;
+  }
+
+  // Check for deep link parameters (e.g., /start offer_123)
+  const startParam = ctx.match;
+  if (startParam && typeof startParam === 'string' && startParam.startsWith('offer_')) {
+    // Extract order ID from parameter like "offer_123"
+    const match = startParam.match(/^offer_(\d+)$/);
+    if (match) {
+      const orderId = parseInt(match[1], 10);
+      if (!isNaN(orderId)) {
+        // Handle offer creation flow
+        await handleOfferCreate(ctx, orderId);
+        return;
+      }
+    }
   }
 
   // Get user info from Core (server will handle user creation if needed)
