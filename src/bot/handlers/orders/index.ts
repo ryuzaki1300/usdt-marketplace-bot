@@ -34,23 +34,15 @@ export async function handleMyOrders(ctx: MyContext) {
       return;
     }
 
-    // Send header message
+    // Send all orders in a single message
+    const message = orderMessages.myOrders.allOrders(orders);
+    const keyboard = orderKeyboards.allOrders(orders);
+    
     try {
-      await ctx.editMessageText(orderMessages.myOrders.header(orders.length), {
-        reply_markup: orderKeyboards.myOrdersHeader(),
+      await ctx.editMessageText(message, {
+        reply_markup: keyboard,
       });
     } catch {
-      await ctx.reply(orderMessages.myOrders.header(orders.length), {
-        reply_markup: orderKeyboards.myOrdersHeader(),
-      });
-    }
-
-    // Send each order as a separate message with its buttons
-    for (let i = 0; i < orders.length; i++) {
-      const order = orders[i];
-      const message = orderMessages.myOrders.singleOrder(order, i + 1);
-      const keyboard = orderKeyboards.singleOrder(order);
-      
       await ctx.reply(message, {
         reply_markup: keyboard,
       });
@@ -72,11 +64,21 @@ export async function handleMyOrders(ctx: MyContext) {
 export async function handleOrderDetails(ctx: MyContext, orderId: number) {
   const userId = ctx.from?.id;
   if (!userId) {
-    await ctx.answerCallbackQuery("شناسایی کاربر امکان‌پذیر نیست.");
+    // Try to answer callback query if it exists, otherwise just return
+    try {
+      await ctx.answerCallbackQuery("شناسایی کاربر امکان‌پذیر نیست.");
+    } catch {
+      // Not a callback query, ignore
+    }
     return;
   }
 
-  await ctx.answerCallbackQuery();
+  // Try to answer callback query if it exists
+  try {
+    await ctx.answerCallbackQuery();
+  } catch {
+    // Not a callback query, ignore
+  }
 
   try {
     // Get order details
@@ -104,6 +106,33 @@ export async function handleOrderDetails(ctx: MyContext, orderId: number) {
       }
     );
   }
+}
+
+export async function handleOrderCommand(ctx: MyContext) {
+  // Skip if user is in a wizard
+  if (ctx.session.orderWizard) {
+    return;
+  }
+
+  const command = ctx.message?.text;
+  if (!command) {
+    return;
+  }
+
+  // Extract order ID from command like "/order_123"
+  const match = command.match(/^\/order_(\d+)$/);
+  if (!match) {
+    await ctx.reply("فرمت دستور نامعتبر است. لطفاً از فرمت /order_<id> استفاده کنید.");
+    return;
+  }
+
+  const orderId = parseInt(match[1], 10);
+  if (isNaN(orderId)) {
+    await ctx.reply("شناسه سفارش نامعتبر است.");
+    return;
+  }
+
+  await handleOrderDetails(ctx, orderId);
 }
 
 export async function handleCancelOrder(ctx: MyContext, orderId: number) {

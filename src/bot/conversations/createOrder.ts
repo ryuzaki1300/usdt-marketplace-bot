@@ -239,21 +239,13 @@ export async function handleOrderConfirm(ctx: MyContext) {
           reply_markup: orderKeyboards.myOrdersEmpty(),
         });
       } else {
-        // Send header message
-        await ctx.reply(orderMessages.myOrders.header(orders.length), {
-          reply_markup: orderKeyboards.myOrdersHeader(),
+        // Send all orders in a single message
+        const message = orderMessages.myOrders.allOrders(orders);
+        const keyboard = orderKeyboards.allOrders(orders);
+        
+        await ctx.reply(message, {
+          reply_markup: keyboard,
         });
-
-        // Send each order as a separate message with its buttons
-        for (let i = 0; i < orders.length; i++) {
-          const order = orders[i];
-          const message = orderMessages.myOrders.singleOrder(order, i + 1);
-          const keyboard = orderKeyboards.singleOrder(order);
-          
-          await ctx.reply(message, {
-            reply_markup: keyboard,
-          });
-        }
       }
     } catch (error: any) {
       // If fetching orders fails, just show success message

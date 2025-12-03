@@ -5,7 +5,7 @@ import { loggerMiddleware } from './middlewares/logger';
 import { errorHandlerMiddleware } from './middlewares/errorHandler';
 import { userDataMiddleware, getUserData } from './middlewares/userData';
 import { handleStart } from './handlers/start';
-import { handleMyOrders, handleOrderDetails, handleCancelOrder } from './handlers/orders';
+import { handleMyOrders, handleOrderDetails, handleCancelOrder, handleOrderCommand } from './handlers/orders';
 import {
   handleOrderCreate,
   handleOrderSide,
@@ -40,6 +40,9 @@ export function createBot(): Bot<MyContext> {
 
   // Register command handlers
   bot.command('start', handleStart);
+  
+  // Handle /order_<id> command pattern (when user clicks on /order_123 in message)
+  bot.hears(/^\/order_\d+$/, handleOrderCommand);
 
   // Register callback query handlers (for inline keyboards)
   bot.callbackQuery('menu:my_orders', async (ctx) => {

@@ -1,3 +1,5 @@
+import { defaultDateTime } from "../../utils/date-helper";
+
 // Order-related messages
 export const orderMessages = {
   myOrders: {
@@ -25,6 +27,45 @@ export const orderMessages = {
       if (order.description) {
         message += `توضیحات: ${order.description}\n`;
       }
+      
+      return message;
+    },
+    allOrders: (orders: any[]) => {
+      if (orders.length === 0) {
+        return "شما هنوز سفارشی ثبت نکرده‌اید.";
+      }
+
+      let message = "";
+      
+      orders.forEach((order, index) => {
+        const createdAt = defaultDateTime();
+        const side = order.side === "buy" ? "🟢 خرید" : "🔴 فروش";
+        const status =
+          order.status === "open"
+            ? "✅ باز"
+            : order.status === "matched"
+            ? "✅ تطبیق شده"
+            : "❌ لغو شده";
+        
+        message += `📋 ${createdAt}\n\n`;
+        message += `نوع: ${side}\n`;
+        message += `مقدار: ${order.amount_usdt} USDT\n`;
+        message += `قیمت: ${order.price_per_unit.toLocaleString()} تومان\n`;
+        message += `قیمت کل: ${(order.amount_usdt * order.price_per_unit).toLocaleString()} تومان\n`;
+        message += `وضعیت: ${status}\n`;
+        if (order.network) {
+          message += `شبکه: ${order.network}\n`;
+        }
+        if (order.description) {
+          message += `توضیحات: ${order.description}\n`;
+        }
+        message += `\nمشاهده جزئیات: /order_${order.id}\n`;
+        
+        // Add empty line between orders (except after the last one)
+        if (index < orders.length - 1) {
+          message += `\n--------------------------------\n`;
+        }
+      });
       
       return message;
     },

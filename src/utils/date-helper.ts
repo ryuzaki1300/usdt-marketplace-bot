@@ -1,26 +1,29 @@
-import moment from "moment-timezone";
+const jalaali = require("jalaali-js");
 
-export function toTehranUnix(pubDate: string): number {
-  const KNOWN_FORMATS = [
-    moment.ISO_8601,
-    "ddd, D MMM YYYY HH:mm:ss ZZ",
-    "ddd, D MMM YYYY HH:mm:ss Z",
-    "MMM D, YYYY - H:mm",
-    "MMM D, YYYY h:mm A",
-    "YYYY/MM/DD HH:mm",
+export const defaultDateTime = () => {
+  const tehranTime = new Date().toLocaleString("en-US", {
+    timeZone: "Asia/Tehran",
+  });
+  const tehranDate = new Date(tehranTime);
+
+  const jDate = jalaali.toJalaali(tehranDate);
+  const year = jDate.jy;
+  const month = jDate.jm.toString().padStart(2, "0");
+  const day = jDate.jd.toString().padStart(2, "0");
+
+  const weekDays = [
+    "یکشنبه",
+    "دوشنبه",
+    "سه‌شنبه",
+    "چهارشنبه",
+    "پنجشنبه",
+    "جمعه",
+    "شنبه",
   ];
+  const dayOfWeek = weekDays[tehranDate.getDay()];
 
-  for (const format of KNOWN_FORMATS) {
-    const parsed = moment.tz(pubDate, format, "Asia/Tehran");
-    if (parsed.isValid()) {
-      return parsed.unix();
-    }
-  }
+  const hours = tehranDate.getHours().toString().padStart(2, "0");
+  const minutes = tehranDate.getMinutes().toString().padStart(2, "0");
 
-  const fallbackParsed = moment(pubDate).tz("Asia/Tehran");
-  if (fallbackParsed.isValid()) {
-    return fallbackParsed.unix();
-  }
-
-  return 0;
-}
+  return `📆 ${dayOfWeek} ${year}/${month}/${day} 🕒 ${hours}:${minutes}`;
+};
