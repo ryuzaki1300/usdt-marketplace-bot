@@ -235,9 +235,25 @@ export async function handleOrderConfirm(ctx: MyContext) {
       status: "open",
     };
     
-    await ctx.api.sendMessage(env.PUBLIC_ORDER_CHANNEL, channelMessages.orderCreated(orderData), {
-      reply_markup: channelKeyboards.orderCreated(orderData),
-    });
+    const channelMessage = await ctx.api.sendMessage(
+      env.PUBLIC_ORDER_CHANNEL,
+      channelMessages.orderCreated(orderData),
+      {
+        reply_markup: channelKeyboards.orderCreated(orderData),
+      }
+    );
+
+    // Store message data in core using order-telegram-meta
+    try {
+      await coreClient.createOrderTelegramMeta({
+        order_id: orderId,
+        chat_id: channelMessage.chat.id,
+        message_id: channelMessage.message_id,
+      });
+    } catch (error: any) {
+      // Log error but don't fail the order creation
+      console.error("Failed to store order telegram meta:", error);
+    }
 
     // Send my_orders as a new message
     try {

@@ -399,6 +399,7 @@ Request body for creating Telegram metadata for an order:
 {
   order_id: number;               // Required, must be unique
   chat_id: number;                // Required
+  message_id?: number;            // Optional
   inline_message_id?: string;     // Optional
 }
 ```
@@ -412,6 +413,7 @@ Request body for updating Telegram metadata:
 ```typescript
 {
   chat_id?: number;               // Optional
+  message_id?: number;            // Optional
   inline_message_id?: string;     // Optional
 }
 ```

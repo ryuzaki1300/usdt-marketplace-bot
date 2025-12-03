@@ -256,6 +256,43 @@ export class CoreClient {
       data,
     });
   }
+
+  /**
+   * Create order telegram metadata
+   */
+  async createOrderTelegramMeta(data: {
+    order_id: number;
+    chat_id: number;
+    message_id?: number;
+    inline_message_id?: string;
+  }) {
+    return this.request("POST", "/order-telegram-meta", {
+      data,
+    });
+  }
+
+  /**
+   * Get order telegram metadata by order ID
+   */
+  async getOrderTelegramMetaByOrderId(orderId: number) {
+    return this.request("GET", `/order-telegram-meta/order/${orderId}`);
+  }
+
+  /**
+   * Update order telegram metadata by order ID
+   */
+  async updateOrderTelegramMetaByOrderId(
+    orderId: number,
+    data: {
+      chat_id?: number;
+      message_id?: number;
+      inline_message_id?: string;
+    }
+  ) {
+    return this.request("PATCH", `/order-telegram-meta/order/${orderId}`, {
+      data,
+    });
+  }
 }
 
 export const coreClient = new CoreClient();

@@ -5,6 +5,9 @@ import { orderMessages } from "../../../ui/messages/orders";
 import { orderKeyboards } from "../../../ui/keyboards/orders";
 import { getMainMenuKeyboard } from "../../../ui/keyboards/mainMenu";
 import { getUserData } from "../../middlewares/userData";
+import { channelMessages } from "../../../ui/messages/channel";
+import { channelKeyboards } from "../../../ui/keyboards/channel";
+import { env } from "../../../config/env";
 
 type MyContext = Context & SessionFlavor<SessionData>;
 
@@ -145,7 +148,37 @@ export async function handleCancelOrder(ctx: MyContext, orderId: number) {
   await ctx.answerCallbackQuery();
 
   try {
+    // Get order details before canceling to have the order data
+    const order = await coreClient.getOrderById(orderId, userId);
+    const orderData = order as any;
+
+    // Cancel the order
     await coreClient.cancelOrder(orderId, userId);
+
+    // Update order status to canceled for message formatting
+    orderData.status = "canceled";
+
+    // Try to get telegram meta and edit channel message
+    try {
+      const telegramMeta = await coreClient.getOrderTelegramMetaByOrderId(orderId);
+      const meta = telegramMeta as any;
+
+      if (meta && meta.chat_id && meta.message_id) {
+        // Edit the channel message to update status
+        await ctx.api.editMessageText(
+          meta.chat_id.toString(),
+          meta.message_id,
+          channelMessages.orderCreated(orderData),
+          {
+            reply_markup: channelKeyboards.orderCreated(orderData),
+          }
+        );
+      }
+    } catch (error: any) {
+      // Log error but don't fail the cancellation
+      console.error("Failed to edit channel message:", error);
+    }
+
     await ctx.reply(orderMessages.orderDetails.cancelSuccess);
   } catch (error: any) {
     await ctx.reply(
