@@ -63,7 +63,86 @@ export async function handleOfferCreate(ctx: MyContext, orderId: number) {
       return;
     }
 
-    // Initialize wizard state
+    // Check if user already has a pending offer for this order
+    const offersResponse = await coreClient.getOrderOffers(orderId, userId, 1, 100);
+    const existingOffer = (offersResponse.data || []).find(
+      (offer: any) => 
+        offer.taker_id === currentUserId && 
+        offer.status === 'pending_maker_decision'
+    );
+
+    if (existingOffer) {
+      // User already has a pending offer - show message with overwrite option
+      const isCallbackQuery = ctx.callbackQuery !== undefined;
+      
+      if (isCallbackQuery) {
+        await ctx.answerCallbackQuery();
+      }
+
+      try {
+        if (isCallbackQuery) {
+          await ctx.api.sendMessage(
+            userId,
+            offerMessages.existingOffer({
+              order: orderData,
+              offer: {
+                id: existingOffer.id,
+                price_per_unit: existingOffer.price_per_unit,
+                comment: existingOffer.comment,
+              },
+            }),
+            {
+              reply_markup: offerKeyboards.existingOffer(orderId),
+            }
+          );
+        } else {
+          await ctx.reply(
+            offerMessages.existingOffer({
+              order: orderData,
+              offer: {
+                id: existingOffer.id,
+                price_per_unit: existingOffer.price_per_unit,
+                comment: existingOffer.comment,
+              },
+            }),
+            {
+              reply_markup: offerKeyboards.existingOffer(orderId),
+            }
+          );
+        }
+      } catch (error: any) {
+        if (error.error_code === 403 || error.description?.includes('bot was blocked') || error.description?.includes('chat not found')) {
+          if (isCallbackQuery) {
+            try {
+              await ctx.answerCallbackQuery({
+                text: "لطفاً ابتدا ربات را در چت خصوصی شروع کنید.",
+                url: `https://t.me/${env.BOT_USERNAME.replace('@', '')}?start=offer_${orderId}`,
+              });
+            } catch {
+              await ctx.reply("لطفاً ابتدا ربات را در چت خصوصی شروع کنید.");
+            }
+          } else {
+            await ctx.reply("لطفاً ابتدا ربات را در چت خصوصی شروع کنید.");
+          }
+        } else {
+          if (isCallbackQuery) {
+            try {
+              await ctx.answerCallbackQuery({
+                text: error.message || "خطا در ارسال پیام. لطفاً دوباره تلاش کنید.",
+                show_alert: true,
+              });
+            } catch {
+              await ctx.reply(error.message || "خطا در ارسال پیام. لطفاً دوباره تلاش کنید.");
+            }
+          } else {
+            await ctx.reply(error.message || "خطا در ارسال پیام. لطفاً دوباره تلاش کنید.");
+          }
+        }
+      }
+      return;
+    }
+
+    // Initialize wizard state for new offer
     ctx.session.offerWizard = {
       order_id: orderId,
       order_price: orderData.price_per_unit,
@@ -235,12 +314,27 @@ export async function handleOfferConfirm(ctx: MyContext) {
   }
 
   try {
-    // Create the offer
-    const offerResponse = await coreClient.createOffer(userId, {
-      order_id: wizard.order_id,
-      price_per_unit: wizard.price,
-      comment: wizard.comment,
-    });
+    let offerId: number;
+    let isUpdate = false;
+
+    // Check if we're updating an existing offer
+    if (wizard.existing_offer_id) {
+      // Update existing offer
+      isUpdate = true;
+      await coreClient.updateOffer(wizard.existing_offer_id, userId, {
+        price_per_unit: wizard.price,
+        comment: wizard.comment,
+      });
+      offerId = wizard.existing_offer_id;
+    } else {
+      // Create new offer
+      const offerResponse = await coreClient.createOffer(userId, {
+        order_id: wizard.order_id,
+        price_per_unit: wizard.price,
+        comment: wizard.comment,
+      });
+      offerId = (offerResponse as any)?.id || (offerResponse as any)?.data?.id;
+    }
 
     // Get order details to notify the maker
     const order = await coreClient.getOrderWithMaker(wizard.order_id, userId);
@@ -254,17 +348,20 @@ export async function handleOfferConfirm(ctx: MyContext) {
     if (!makerTelegramUserId && orderData.maker) {
       makerTelegramUserId = orderData.maker.telegram_user_id;
     }
-    
-    const offerId = (offerResponse as any)?.id || (offerResponse as any)?.data?.id;
 
     // Clear wizard state
     ctx.session.offerWizard = undefined;
 
     // Show success message
-    await ctx.editMessageText(offerMessages.createOffer.success);
+    if (isUpdate) {
+      await ctx.editMessageText(offerMessages.offerUpdated.success);
+    } else {
+      await ctx.editMessageText(offerMessages.createOffer.success);
+    }
 
     // Send notification to maker if we have their telegram ID
-    if (makerTelegramUserId) {
+    // Only send notification for new offers, not updates (to avoid spam)
+    if (makerTelegramUserId && !isUpdate) {
       try {
         await ctx.api.sendMessage(
           makerTelegramUserId,
@@ -298,13 +395,68 @@ export async function handleOfferConfirm(ctx: MyContext) {
       // Ignore errors in sending main menu
     }
   } catch (error: any) {
+    const wizard = ctx.session.offerWizard;
+    const isUpdate = wizard?.existing_offer_id !== undefined;
+    
     await ctx.editMessageText(
-      error.message || offerMessages.createOffer.error,
+      error.message || (isUpdate ? offerMessages.offerUpdated.error : offerMessages.createOffer.error),
       {
         reply_markup: getMainMenuKeyboard(false),
       }
     );
     ctx.session.offerWizard = undefined;
+  }
+}
+
+export async function handleOfferOverwrite(ctx: MyContext, orderId: number) {
+  const userId = ctx.from?.id;
+  if (!userId) {
+    await ctx.answerCallbackQuery("شناسایی کاربر امکان‌پذیر نیست.");
+    return;
+  }
+
+  await ctx.answerCallbackQuery();
+
+  try {
+    // Get user profile to get internal user ID
+    const userProfile = await coreClient.getUserProfile(userId);
+    const currentUserId = (userProfile as any)?.id;
+
+    // Get order details
+    const order = await coreClient.getOrderWithMaker(orderId, userId);
+    const orderData = order as any;
+
+    // Find existing offer
+    const offersResponse = await coreClient.getOrderOffers(orderId, userId, 1, 100);
+    const existingOffer = (offersResponse.data || []).find(
+      (offer: any) => 
+        offer.taker_id === currentUserId && 
+        offer.status === 'pending_maker_decision'
+    );
+
+    if (!existingOffer) {
+      await ctx.reply("پیشنهاد موجود یافت نشد. لطفاً دوباره تلاش کنید.");
+      return;
+    }
+
+    // Initialize wizard state for overwriting
+    ctx.session.offerWizard = {
+      order_id: orderId,
+      order_price: orderData.price_per_unit,
+      existing_offer_id: existingOffer.id,
+      step: "price",
+    };
+
+    await ctx.reply(offerMessages.createOffer.enterPrice(orderData.price_per_unit), {
+      reply_markup: offerKeyboards.priceStep(),
+    });
+  } catch (error: any) {
+    await ctx.reply(
+      error.message || "خطا در شروع به‌روزرسانی پیشنهاد. لطفاً دوباره تلاش کنید.",
+      {
+        reply_markup: getMainMenuKeyboard(false),
+      }
+    );
   }
 }
 

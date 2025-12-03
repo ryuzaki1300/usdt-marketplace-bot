@@ -24,6 +24,7 @@ import {
   handleOfferComment,
   handleOfferConfirm,
   handleOfferCancel,
+  handleOfferOverwrite,
 } from './conversations/createOffer';
 import { commonMessages } from '../ui/messages/common';
 import { getMainMenuKeyboard } from '../ui/keyboards/mainMenu';
@@ -164,6 +165,11 @@ export function createBot(): Bot<MyContext> {
   bot.callbackQuery(/^offer:accept:(\d+)$/, async (ctx) => {
     const offerId = parseInt(ctx.match[1], 10);
     await handleOfferAccept(ctx, offerId);
+  });
+
+  bot.callbackQuery(/^offer:overwrite:(\d+)$/, async (ctx) => {
+    const orderId = parseInt(ctx.match[1], 10);
+    await handleOfferOverwrite(ctx, orderId);
   });
 
   // Handle text messages during order creation wizard

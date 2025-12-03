@@ -22,5 +22,6 @@ export interface SessionData {
     price?: number;
     comment?: string;
     step?: "price" | "comment" | "summary";
+    existing_offer_id?: number; // If set, we're overwriting an existing offer
   };
 }

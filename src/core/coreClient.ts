@@ -239,6 +239,23 @@ export class CoreClient {
       telegramUserId,
     });
   }
+
+  /**
+   * Update an offer
+   */
+  async updateOffer(
+    offerId: number,
+    telegramUserId: number,
+    data: {
+      price_per_unit?: number;
+      comment?: string;
+    }
+  ) {
+    return this.request("PATCH", `/order-offers/${offerId}`, {
+      telegramUserId,
+      data,
+    });
+  }
 }
 
 export const coreClient = new CoreClient();

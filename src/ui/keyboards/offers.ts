@@ -30,4 +30,11 @@ export const offerKeyboards = {
       .text("❌ رد کردن", `offer:reject:${offerId}`)
       .row();
   },
+
+  existingOffer: (orderId: number): InlineKeyboard => {
+    return new InlineKeyboard()
+      .text("🔄 به‌روزرسانی پیشنهاد", `offer:overwrite:${orderId}`)
+      .row()
+      .text("❌ لغو", "offer:cancel");
+  },
 };

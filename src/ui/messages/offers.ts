@@ -72,5 +72,30 @@ export const offerMessages = {
     error: "❌ خطا در پذیرش پیشنهاد. لطفاً دوباره تلاش کنید.",
     placeholder: "قابلیت پذیرش پیشنهاد به زودی اضافه می‌شود.",
   },
+  existingOffer: (data: {
+    order: any;
+    offer: {
+      id: number;
+      price_per_unit: number;
+      comment?: string;
+    };
+  }) => {
+    const side = data.order.side === "buy" ? "🟢 خرید" : "🔴 فروش";
+    const total = data.order.amount_usdt * data.offer.price_per_unit;
+    let message = "⚠️ شما قبلاً برای این سفارش پیشنهاد داده‌اید:\n\n";
+    message += `سفارش: ${side}\n`;
+    message += `مقدار: ${data.order.amount_usdt} USDT\n`;
+    message += `قیمت پیشنهادی فعلی: ${data.offer.price_per_unit.toLocaleString()} تومان\n`;
+    message += `قیمت کل: ${total.toLocaleString()} تومان\n`;
+    if (data.offer.comment) {
+      message += `پیام: ${data.offer.comment}\n`;
+    }
+    message += `\nآیا می‌خواهید پیشنهاد خود را با قیمت یا پیام جدید به‌روزرسانی کنید؟`;
+    return message;
+  },
+  offerUpdated: {
+    success: "✅ پیشنهاد شما با موفقیت به‌روزرسانی شد!",
+    error: "❌ خطا در به‌روزرسانی پیشنهاد. لطفاً دوباره تلاش کنید.",
+  },
 };
 
