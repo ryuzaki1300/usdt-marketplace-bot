@@ -104,11 +104,16 @@ export class CoreClient {
    * Get user orders
    * First gets the user profile to get internal user ID, then fetches orders
    */
-  async getUserOrders(telegramUserId: number, page: number = 1, limit: number = 10) {
+  async getUserOrders(
+    telegramUserId: number,
+    status: "open" | "matched" | "canceled" = "open",
+    page: number = 1,
+    limit: number = 10
+  ) {
     // Get user profile to get internal user ID
     const user = await this.getUserProfile(telegramUserId);
     const userId = (user as any)?.id;
-    
+
     if (!userId) {
       throw {
         statusCode: 404,
@@ -127,7 +132,7 @@ export class CoreClient {
       totalPages: number;
       hasNext: boolean;
       hasPrev: boolean;
-    }>("GET", `/orders?maker_id=${userId}&page=${page}&limit=${limit}`, {
+    }>("GET", `/orders?maker_id=${userId}&status=${status}&page=${page}&limit=${limit}`, {
       telegramUserId,
     });
   }
@@ -138,7 +143,7 @@ export class CoreClient {
   async createOrder(
     telegramUserId: number,
     data: {
-      side: 'buy' | 'sell';
+      side: "buy" | "sell";
       amount_usdt: number;
       price_per_unit: number;
       network?: string;
@@ -163,7 +168,12 @@ export class CoreClient {
   /**
    * Get offers for an order
    */
-  async getOrderOffers(orderId: number, telegramUserId?: number, page: number = 1, limit: number = 100) {
+  async getOrderOffers(
+    orderId: number,
+    telegramUserId?: number,
+    page: number = 1,
+    limit: number = 100
+  ) {
     return this.request<{
       data: any[];
       page: number;

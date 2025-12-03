@@ -17,7 +17,7 @@ export async function handleMyOrders(ctx: MyContext) {
 
   try {
     // Get user orders from Core
-    const response = await coreClient.getUserOrders(userId);
+    const response = await coreClient.getUserOrders(userId, "open");
     const orders = response.data || [];
 
     if (orders.length === 0) {
