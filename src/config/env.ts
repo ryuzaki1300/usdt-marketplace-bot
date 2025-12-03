@@ -5,6 +5,7 @@ dotenv.config();
 
 interface EnvConfig {
   BOT_TOKEN: string;
+  BOT_USERNAME: string;
   CORE_API_KEY: string;
   CORE_BASE_URL: string;
   PUBLIC_ORDER_CHANNEL: string;
@@ -12,7 +13,7 @@ interface EnvConfig {
 }
 
 function validateEnv(): EnvConfig {
-  const required = ['BOT_TOKEN', 'CORE_API_KEY', 'CORE_BASE_URL', 'PUBLIC_ORDER_CHANNEL'];
+  const required = ['BOT_TOKEN', 'BOT_USERNAME', 'CORE_API_KEY', 'CORE_BASE_URL', 'PUBLIC_ORDER_CHANNEL'];
   const missing: string[] = [];
 
   for (const key of required) {
@@ -30,6 +31,7 @@ function validateEnv(): EnvConfig {
 
   return {
     BOT_TOKEN: process.env.BOT_TOKEN!,
+    BOT_USERNAME: process.env.BOT_USERNAME!,
     CORE_API_KEY: process.env.CORE_API_KEY!,
     CORE_BASE_URL: process.env.CORE_BASE_URL!,
     PUBLIC_ORDER_CHANNEL: process.env.PUBLIC_ORDER_CHANNEL!,

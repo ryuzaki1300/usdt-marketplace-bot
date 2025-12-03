@@ -6,6 +6,7 @@ import { errorHandlerMiddleware } from './middlewares/errorHandler';
 import { userDataMiddleware, getUserData } from './middlewares/userData';
 import { handleStart } from './handlers/start';
 import { handleMyOrders, handleOrderDetails, handleCancelOrder, handleOrderCommand } from './handlers/orders';
+import { handleOfferCommand } from './handlers/offers';
 import {
   handleOrderCreate,
   handleOrderSide,
@@ -17,6 +18,13 @@ import {
   handleOrderConfirm,
   handleOrderCancel,
 } from './conversations/createOrder';
+import {
+  handleOfferCreate,
+  handleOfferPrice,
+  handleOfferComment,
+  handleOfferConfirm,
+  handleOfferCancel,
+} from './conversations/createOffer';
 import { commonMessages } from '../ui/messages/common';
 import { getMainMenuKeyboard } from '../ui/keyboards/mainMenu';
 
@@ -43,6 +51,9 @@ export function createBot(): Bot<MyContext> {
   
   // Handle /order_<id> command pattern (when user clicks on /order_123 in message)
   bot.hears(/^\/order_\d+$/, handleOrderCommand);
+  
+  // Handle /offer_<id> or offer_<id> command pattern (when user clicks on /offer_123 in message)
+  bot.hears(/^\/?offer_\d+$/, handleOfferCommand);
 
   // Register callback query handlers (for inline keyboards)
   bot.callbackQuery('menu:my_orders', async (ctx) => {
@@ -119,29 +130,74 @@ export function createBot(): Bot<MyContext> {
     await handleOrderDescription(ctx);
   });
 
+  // Offer creation wizard handlers
+  bot.callbackQuery(/^offer:create:(\d+)$/, async (ctx) => {
+    const orderId = parseInt(ctx.match[1], 10);
+    await handleOfferCreate(ctx, orderId);
+  });
+
+  bot.callbackQuery('offer:skip_price', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await handleOfferPrice(ctx);
+  });
+
+  bot.callbackQuery('offer:skip_comment', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await handleOfferComment(ctx);
+  });
+
+  bot.callbackQuery('offer:confirm', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await handleOfferConfirm(ctx);
+  });
+
+  bot.callbackQuery('offer:cancel', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await handleOfferCancel(ctx);
+  });
+
   // Handle text messages during order creation wizard
   bot.on('message:text', async (ctx) => {
-    const wizard = ctx.session.orderWizard;
-    if (!wizard) {
-      return; // Not in wizard, ignore
+    const orderWizard = ctx.session.orderWizard;
+    const offerWizard = ctx.session.offerWizard;
+
+    // Handle offer wizard first (if active)
+    if (offerWizard) {
+      const text = ctx.message.text;
+
+      switch (offerWizard.step) {
+        case 'price':
+          await handleOfferPrice(ctx, text);
+          break;
+        case 'comment':
+          await handleOfferComment(ctx, text);
+          break;
+        default:
+          // Ignore text in other steps
+          break;
+      }
+      return;
     }
 
-    const text = ctx.message.text;
+    // Handle order wizard (if active)
+    if (orderWizard) {
+      const text = ctx.message.text;
 
-    // Handle wizard steps
-    switch (wizard.step) {
-      case 'amount':
-        await handleOrderAmount(ctx, text);
-        break;
-      case 'price':
-        await handleOrderPrice(ctx, text);
-        break;
-      case 'description':
-        await handleOrderDescription(ctx, text);
-        break;
-      default:
-        // Ignore text in other steps
-        break;
+      // Handle wizard steps
+      switch (orderWizard.step) {
+        case 'amount':
+          await handleOrderAmount(ctx, text);
+          break;
+        case 'price':
+          await handleOrderPrice(ctx, text);
+          break;
+        case 'description':
+          await handleOrderDescription(ctx, text);
+          break;
+        default:
+          // Ignore text in other steps
+          break;
+      }
     }
   });
 

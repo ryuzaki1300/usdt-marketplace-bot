@@ -195,6 +195,32 @@ export class CoreClient {
       telegramUserId,
     });
   }
+
+  /**
+   * Create an offer on an order
+   */
+  async createOffer(
+    telegramUserId: number,
+    data: {
+      order_id: number;
+      price_per_unit: number;
+      comment?: string;
+    }
+  ) {
+    return this.request("POST", "/order-offers", {
+      telegramUserId,
+      data,
+    });
+  }
+
+  /**
+   * Get order by ID (for fetching order details including maker info)
+   */
+  async getOrderWithMaker(orderId: number, telegramUserId?: number) {
+    return this.request("GET", `/orders/${orderId}`, {
+      telegramUserId,
+    });
+  }
 }
 
 export const coreClient = new CoreClient();

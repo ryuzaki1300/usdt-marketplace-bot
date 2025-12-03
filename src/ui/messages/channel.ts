@@ -2,6 +2,7 @@ import { defaultDateTime } from "../../utils/date-helper";
 
 export const channelMessages = {
   orderCreated: (order: any) => {
+    console.log(order);
     const side = order.side === "buy" ? "🟢 خرید" : "🔴 فروش";
     const status =
       order.status === "open"

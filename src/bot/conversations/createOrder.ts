@@ -10,6 +10,7 @@ import { kycMessages } from "../../ui/messages/kyc";
 import { getKycRequiredKeyboard } from "../../ui/keyboards/kyc";
 import { env } from "../../config/env";
 import { channelMessages } from "../../ui/messages/channel";
+import { channelKeyboards } from "../../ui/keyboards/channel";
 
 type MyContext = Context & SessionFlavor<SessionData>;
 
@@ -205,7 +206,7 @@ export async function handleOrderConfirm(ctx: MyContext) {
   }
 
   try {
-    await coreClient.createOrder(userId, {
+    const orderResponse = await coreClient.createOrder(userId, {
       side: wizard.side,
       amount_usdt: wizard.amount,
       price_per_unit: wizard.price,
@@ -213,21 +214,30 @@ export async function handleOrderConfirm(ctx: MyContext) {
       description: wizard.description,
     });
 
+    // Get order ID from response
+    const orderId = (orderResponse as any)?.id || (orderResponse as any)?.data?.id;
+
     // Clear wizard state
     ctx.session.orderWizard = undefined;
 
     // Show success message and redirect to my_orders
     await ctx.editMessageText(orderMessages.createOrder.success);
 
-    // Send message to public channel
-    await ctx.api.sendMessage(env.PUBLIC_ORDER_CHANNEL, channelMessages.orderCreated({
+    // Send message to public channel with button
+    const orderData = {
+      id: orderId,
       side: wizard.side,
       amount_usdt: wizard.amount,
       price_per_unit: wizard.price,
       network: wizard.network,
       description: wizard.description,
       created_at: new Date().toISOString(),
-    }));
+      status: "open",
+    };
+    
+    await ctx.api.sendMessage(env.PUBLIC_ORDER_CHANNEL, channelMessages.orderCreated(orderData), {
+      reply_markup: channelKeyboards.orderCreated(orderData),
+    });
 
     // Send my_orders as a new message
     try {

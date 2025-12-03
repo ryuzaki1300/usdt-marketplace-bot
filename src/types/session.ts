@@ -15,4 +15,12 @@ export interface SessionData {
       | "summary"
       | "confirm";
   };
+  // Offer creation wizard state
+  offerWizard?: {
+    order_id?: number;
+    order_price?: number; // Store order price to use as default
+    price?: number;
+    comment?: string;
+    step?: "price" | "comment" | "summary";
+  };
 }
