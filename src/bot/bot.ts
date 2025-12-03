@@ -6,7 +6,7 @@ import { errorHandlerMiddleware } from './middlewares/errorHandler';
 import { userDataMiddleware, getUserData } from './middlewares/userData';
 import { handleStart } from './handlers/start';
 import { handleMyOrders, handleOrderDetails, handleCancelOrder, handleOrderCommand } from './handlers/orders';
-import { handleOfferCommand } from './handlers/offers';
+import { handleOfferCommand, handleOfferReject, handleOfferAccept } from './handlers/offers';
 import {
   handleOrderCreate,
   handleOrderSide,
@@ -154,6 +154,16 @@ export function createBot(): Bot<MyContext> {
   bot.callbackQuery('offer:cancel', async (ctx) => {
     await ctx.answerCallbackQuery();
     await handleOfferCancel(ctx);
+  });
+
+  bot.callbackQuery(/^offer:reject:(\d+)$/, async (ctx) => {
+    const offerId = parseInt(ctx.match[1], 10);
+    await handleOfferReject(ctx, offerId);
+  });
+
+  bot.callbackQuery(/^offer:accept:(\d+)$/, async (ctx) => {
+    const offerId = parseInt(ctx.match[1], 10);
+    await handleOfferAccept(ctx, offerId);
   });
 
   // Handle text messages during order creation wizard

@@ -275,7 +275,10 @@ export async function handleOfferConfirm(ctx: MyContext) {
               price_per_unit: wizard.price,
               comment: wizard.comment,
             },
-          })
+          }),
+          {
+            reply_markup: offerKeyboards.offerReceived(offerId),
+          }
         );
       } catch (error: any) {
         // If we can't send to maker (e.g., they blocked the bot), just log it

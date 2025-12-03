@@ -48,5 +48,29 @@ export const offerMessages = {
     }
     return message;
   },
+  offerRejected: {
+    byMaker: (data: {
+      order: any;
+      offer: {
+        id: number;
+        price_per_unit: number;
+      };
+    }) => {
+      const side = data.order.side === "buy" ? "🟢 خرید" : "🔴 فروش";
+      let message = "❌ پیشنهاد شما رد شد\n\n";
+      message += `سفارش: ${side}\n`;
+      message += `مقدار: ${data.order.amount_usdt} USDT\n`;
+      message += `قیمت پیشنهادی: ${data.offer.price_per_unit.toLocaleString()} تومان\n`;
+      message += `\nمتأسفانه سازنده سفارش پیشنهاد شما را رد کرد.`;
+      return message;
+    },
+    success: "✅ پیشنهاد با موفقیت رد شد.",
+    error: "❌ خطا در رد پیشنهاد. لطفاً دوباره تلاش کنید.",
+  },
+  offerAccepted: {
+    success: "✅ پیشنهاد با موفقیت پذیرفته شد.",
+    error: "❌ خطا در پذیرش پیشنهاد. لطفاً دوباره تلاش کنید.",
+    placeholder: "قابلیت پذیرش پیشنهاد به زودی اضافه می‌شود.",
+  },
 };
 

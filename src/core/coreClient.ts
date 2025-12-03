@@ -221,6 +221,24 @@ export class CoreClient {
       telegramUserId,
     });
   }
+
+  /**
+   * Reject an offer (maker action)
+   */
+  async rejectOffer(offerId: number, telegramUserId: number) {
+    return this.request("POST", `/order-offers/${offerId}/reject`, {
+      telegramUserId,
+    });
+  }
+
+  /**
+   * Get offer by ID (for fetching offer details including taker info)
+   */
+  async getOfferById(offerId: number, telegramUserId?: number) {
+    return this.request("GET", `/order-offers/${offerId}`, {
+      telegramUserId,
+    });
+  }
 }
 
 export const coreClient = new CoreClient();

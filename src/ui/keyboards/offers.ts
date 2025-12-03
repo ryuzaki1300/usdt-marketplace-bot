@@ -23,4 +23,11 @@ export const offerKeyboards = {
       .row()
       .text("❌ لغو", "offer:cancel");
   },
+
+  offerReceived: (offerId: number): InlineKeyboard => {
+    return new InlineKeyboard()
+      .text("✅ پذیرفتن", `offer:accept:${offerId}`)
+      .text("❌ رد کردن", `offer:reject:${offerId}`)
+      .row();
+  },
 };
