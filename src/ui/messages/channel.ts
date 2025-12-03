@@ -1,4 +1,4 @@
-import { toTehranUnix } from "../../utils/date-helper";
+import { defaultDateTime } from "../../utils/date-helper";
 
 export const channelMessages = {
   orderCreated: (order: any) => {
@@ -9,8 +9,8 @@ export const channelMessages = {
         : order.status === "matched"
         ? "✅ تطبیق شده"
         : "❌ لغو شده";
-    const createdAt = toTehranUnix(order.created_at);
-    let message = `📋 سفارش جدید (${createdAt})\n\n`;
+    const createdAt = defaultDateTime();
+    let message = `📋 ${createdAt}\n\n`;
     message += `نوع: ${side}\n`;
     message += `مقدار: ${order.amount_usdt} USDT\n`;
     message += `قیمت: ${order.price_per_unit.toLocaleString()} تومان\n`;
