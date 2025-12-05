@@ -111,6 +111,11 @@ For user-specific operations, include:
 | POST | `/users/:id/block` | Block a user | `x-api-key`, `x-telegram-user-id` | admin, super_admin |
 | POST | `/users/:id/kyc/review` | Review KYC application | `x-api-key`, `x-telegram-user-id` | admin, super_admin |
 
+**Query Parameters for GET `/users`**:
+- `page` (optional): Page number (default: 1, min: 1)
+- `limit` (optional): Items per page (default: 10, min: 1, max: 100)
+- `admins_only` (optional): If `true` or `1`, returns only users with `admin` or `super_admin` role (default: `false`)
+
 #### Super Admin Endpoints
 
 | Method | Endpoint | Description | Headers Required | Role Required |

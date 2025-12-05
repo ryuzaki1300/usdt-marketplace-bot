@@ -221,16 +221,16 @@ export async function handleOfferAccept(ctx: MyContext, offerId: number) {
 
       // Try to get admins if current user is admin or super_admin
       if (currentUserRole === "admin" || currentUserRole === "super_admin") {
-        // Get all users (paginated, we'll need to fetch all pages)
-        let allUsers: any[] = [];
+        // Get all admins and super_admins using admins_only parameter
+        let admins: any[] = [];
         let page = 1;
         let hasMore = true;
 
         while (hasMore) {
           try {
-            const usersResponse = await coreClient.getAllUsers(userId, page, 100);
+            const usersResponse = await coreClient.getAllUsers(userId, page, 100, true);
             const usersData = usersResponse as any;
-            allUsers = allUsers.concat(usersData.data || []);
+            admins = admins.concat(usersData.data || []);
             hasMore = usersData.hasNext || false;
             page++;
           } catch (error: any) {
@@ -238,15 +238,10 @@ export async function handleOfferAccept(ctx: MyContext, offerId: number) {
             hasMore = false;
             if (error.statusCode !== 403) {
               // Log non-permission errors
-              console.error("Error fetching users:", error);
+              console.error("Error fetching admins:", error);
             }
           }
         }
-
-        // Filter for admins and super_admins
-        const admins = allUsers.filter(
-          (user: any) => user.role === "admin" || user.role === "super_admin"
-        );
 
         // Get maker and taker details from deal
         const maker = dealFullData.maker || orderData.maker;

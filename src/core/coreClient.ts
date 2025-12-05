@@ -325,8 +325,10 @@ export class CoreClient {
   async getAllUsers(
     telegramUserId: number,
     page: number = 1,
-    limit: number = 100
+    limit: number = 100,
+    adminsOnly: boolean = false
   ) {
+    const adminsOnlyParam = adminsOnly ? "&admins_only=1" : "";
     return this.request<{
       data: any[];
       page: number;
@@ -335,7 +337,7 @@ export class CoreClient {
       totalPages: number;
       hasNext: boolean;
       hasPrev: boolean;
-    }>("GET", `/users?page=${page}&limit=${limit}`, {
+    }>("GET", `/users?page=${page}&limit=${limit}${adminsOnlyParam}`, {
       telegramUserId,
     });
   }
