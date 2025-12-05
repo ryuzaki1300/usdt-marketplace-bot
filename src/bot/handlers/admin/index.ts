@@ -22,15 +22,28 @@ export async function handleOpenDeals(ctx: MyContext) {
   }
 
   try {
-    // Get all pending_admin deals
-    const dealsResponse = await coreClient.getDeals(userId, {
-      status: "pending_admin",
-      page: 1,
-      limit: 100, // Get all pending deals
-    });
+    // Get all pending_admin and in_progress deals
+    const [pendingDealsResponse, inProgressDealsResponse] = await Promise.all([
+      coreClient.getDeals(userId, {
+        status: "pending_admin",
+        page: 1,
+        limit: 100,
+      }),
+      coreClient.getDeals(userId, {
+        status: "in_progress",
+        page: 1,
+        limit: 100,
+      }),
+    ]);
 
-    const dealsData = dealsResponse as any;
-    const deals = dealsData.data || [];
+    const pendingDealsData = pendingDealsResponse as any;
+    const inProgressDealsData = inProgressDealsResponse as any;
+
+    // Combine both arrays
+    const deals = [
+      ...(pendingDealsData.data || []),
+      ...(inProgressDealsData.data || []),
+    ];
 
     if (deals.length === 0) {
       await ctx.editMessageText(
@@ -155,10 +168,25 @@ export async function handleDealDetails(ctx: MyContext, dealId: number) {
     const dealStatus = dealData.status || "pending_admin";
     const currentDealId = dealData.id;
 
-    // Send message with status keyboard
-    await ctx.reply(message, {
-      reply_markup: getDealStatusKeyboard(dealStatus, currentDealId),
-    });
+    // Send or edit message with status keyboard
+    if (ctx.callbackQuery?.message) {
+      // If it's a callback query (button click), try to edit the message
+      try {
+        await ctx.editMessageText(message, {
+          reply_markup: getDealStatusKeyboard(dealStatus, currentDealId),
+        });
+      } catch (error) {
+        // If we can't edit (e.g., message is too old), send a new message
+        await ctx.reply(message, {
+          reply_markup: getDealStatusKeyboard(dealStatus, currentDealId),
+        });
+      }
+    } else {
+      // If it's a new message (command), send a new message
+      await ctx.reply(message, {
+        reply_markup: getDealStatusKeyboard(dealStatus, currentDealId),
+      });
+    }
   } catch (error: any) {
     await ctx.reply(
       error.message || "خطا در دریافت اطلاعات معامله. لطفاً دوباره تلاش کنید.",
@@ -318,4 +346,94 @@ export async function handleUserCommand(ctx: MyContext) {
   }
 
   await handleUserProfile(ctx, userId);
+}
+
+export async function handleDealApprove(ctx: MyContext, dealId: number) {
+  const userId = ctx.from?.id;
+  if (!userId) {
+    await ctx.answerCallbackQuery("خطا در شناسایی کاربر.");
+    return;
+  }
+
+  // Check if user is admin
+  const user = getUserData(ctx);
+  const role = (user as any)?.role;
+  const isAdmin = role === "admin" || role === "super_admin";
+
+  if (!isAdmin) {
+    await ctx.answerCallbackQuery("❌ شما دسترسی لازم برای این عملیات را ندارید.");
+    return;
+  }
+
+  try {
+    await coreClient.approveDeal(dealId, userId);
+    await ctx.answerCallbackQuery("✅ معامله با موفقیت شروع شد.");
+
+    // Refresh deal details view
+    await handleDealDetails(ctx, dealId);
+  } catch (error: any) {
+    await ctx.answerCallbackQuery(
+      error.message || "خطا در شروع معامله. لطفاً دوباره تلاش کنید."
+    );
+  }
+}
+
+export async function handleDealComplete(ctx: MyContext, dealId: number) {
+  const userId = ctx.from?.id;
+  if (!userId) {
+    await ctx.answerCallbackQuery("خطا در شناسایی کاربر.");
+    return;
+  }
+
+  // Check if user is admin
+  const user = getUserData(ctx);
+  const role = (user as any)?.role;
+  const isAdmin = role === "admin" || role === "super_admin";
+
+  if (!isAdmin) {
+    await ctx.answerCallbackQuery("❌ شما دسترسی لازم برای این عملیات را ندارید.");
+    return;
+  }
+
+  try {
+    await coreClient.completeDeal(dealId, userId);
+    await ctx.answerCallbackQuery("✅ معامله با موفقیت تکمیل شد.");
+
+    // Refresh deal details view
+    await handleDealDetails(ctx, dealId);
+  } catch (error: any) {
+    await ctx.answerCallbackQuery(
+      error.message || "خطا در تکمیل معامله. لطفاً دوباره تلاش کنید."
+    );
+  }
+}
+
+export async function handleDealCancel(ctx: MyContext, dealId: number) {
+  const userId = ctx.from?.id;
+  if (!userId) {
+    await ctx.answerCallbackQuery("خطا در شناسایی کاربر.");
+    return;
+  }
+
+  // Check if user is admin
+  const user = getUserData(ctx);
+  const role = (user as any)?.role;
+  const isAdmin = role === "admin" || role === "super_admin";
+
+  if (!isAdmin) {
+    await ctx.answerCallbackQuery("❌ شما دسترسی لازم برای این عملیات را ندارید.");
+    return;
+  }
+
+  try {
+    await coreClient.cancelDeal(dealId, userId);
+    await ctx.answerCallbackQuery("✅ معامله با موفقیت لغو شد.");
+
+    // Refresh deal details view
+    await handleDealDetails(ctx, dealId);
+  } catch (error: any) {
+    await ctx.answerCallbackQuery(
+      error.message || "خطا در لغو معامله. لطفاً دوباره تلاش کنید."
+    );
+  }
 }

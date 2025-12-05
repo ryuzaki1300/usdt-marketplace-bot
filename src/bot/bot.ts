@@ -7,7 +7,7 @@ import { userDataMiddleware, getUserData } from './middlewares/userData';
 import { handleStart } from './handlers/start';
 import { handleMyOrders, handleOrderDetails, handleCancelOrder, handleOrderCommand } from './handlers/orders';
 import { handleOfferCommand, handleOfferReject, handleOfferAccept } from './handlers/offers';
-import { handleOpenDeals, handleDealCommand, handleUserCommand } from './handlers/admin';
+import { handleOpenDeals, handleDealCommand, handleUserCommand, handleDealApprove, handleDealComplete, handleDealCancel } from './handlers/admin';
 import {
   handleOrderCreate,
   handleOrderSide,
@@ -322,6 +322,22 @@ export function createBot(): Bot<MyContext> {
     await ctx.editMessageText(adminMessages.addAdmin, {
       reply_markup: getAdminMenuKeyboard(true),
     });
+  });
+
+  // Deal status action handlers
+  bot.callbackQuery(/^admin:deal:approve:(\d+)$/, async (ctx) => {
+    const dealId = parseInt(ctx.match[1], 10);
+    await handleDealApprove(ctx, dealId);
+  });
+
+  bot.callbackQuery(/^admin:deal:complete:(\d+)$/, async (ctx) => {
+    const dealId = parseInt(ctx.match[1], 10);
+    await handleDealComplete(ctx, dealId);
+  });
+
+  bot.callbackQuery(/^admin:deal:cancel:(\d+)$/, async (ctx) => {
+    const dealId = parseInt(ctx.match[1], 10);
+    await handleDealCancel(ctx, dealId);
   });
 
   return bot;

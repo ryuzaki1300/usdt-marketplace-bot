@@ -388,6 +388,33 @@ export class CoreClient {
       telegramUserId,
     });
   }
+
+  /**
+   * Approve deal (admin only) - changes status from pending_admin to in_progress
+   */
+  async approveDeal(dealId: number, telegramUserId: number) {
+    return this.request("POST", `/deals/${dealId}/approve`, {
+      telegramUserId,
+    });
+  }
+
+  /**
+   * Complete deal (admin only) - changes status from in_progress to completed
+   */
+  async completeDeal(dealId: number, telegramUserId: number) {
+    return this.request("POST", `/deals/${dealId}/complete`, {
+      telegramUserId,
+    });
+  }
+
+  /**
+   * Cancel deal (admin only)
+   */
+  async cancelDeal(dealId: number, telegramUserId: number) {
+    return this.request("POST", `/deals/${dealId}/cancel`, {
+      telegramUserId,
+    });
+  }
 }
 
 export const coreClient = new CoreClient();
