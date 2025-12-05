@@ -7,6 +7,7 @@ import { userDataMiddleware, getUserData } from './middlewares/userData';
 import { handleStart } from './handlers/start';
 import { handleMyOrders, handleOrderDetails, handleCancelOrder, handleOrderCommand } from './handlers/orders';
 import { handleOfferCommand, handleOfferReject, handleOfferAccept } from './handlers/offers';
+import { handleOpenDeals, handleDealCommand } from './handlers/admin';
 import {
   handleOrderCreate,
   handleOrderSide,
@@ -57,6 +58,9 @@ export function createBot(): Bot<MyContext> {
   
   // Handle /offer_<id> or offer_<id> command pattern (when user clicks on /offer_123 in message)
   bot.hears(/^\/?offer_\d+$/, handleOfferCommand);
+  
+  // Handle /deal_<id> command pattern (when admin clicks on /deal_123 in message)
+  bot.hears(/^\/deal_\d+$/, handleDealCommand);
 
   // Register callback query handlers (for inline keyboards)
   bot.callbackQuery('menu:my_orders', async (ctx) => {
@@ -276,9 +280,7 @@ export function createBot(): Bot<MyContext> {
   // Admin menu item handlers
   bot.callbackQuery('admin:open_deals', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await ctx.editMessageText(adminMessages.openDeals, {
-      reply_markup: getAdminMenuKeyboard((getUserData(ctx) as any)?.role === "super_admin"),
-    });
+    await handleOpenDeals(ctx);
   });
 
   bot.callbackQuery('admin:kyc_requests', async (ctx) => {

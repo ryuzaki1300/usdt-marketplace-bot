@@ -20,3 +20,8 @@ export function getAdminMenuKeyboard(isSuperAdmin: boolean = false): InlineKeybo
   return keyboard;
 }
 
+export function getBackToAdminMenuKeyboard(): InlineKeyboard {
+  return new InlineKeyboard()
+    .text("🔙 بازگشت به منوی مدیریت", "menu:admin");
+}
+

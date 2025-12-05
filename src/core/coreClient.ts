@@ -320,6 +320,44 @@ export class CoreClient {
   }
 
   /**
+   * Get deals with filters (paginated)
+   */
+  async getDeals(
+    telegramUserId: number,
+    filters?: {
+      status?: "pending_admin" | "in_progress" | "completed" | "cancelled";
+      order_id?: number;
+      maker_id?: number;
+      taker_id?: number;
+      page?: number;
+      limit?: number;
+    }
+  ) {
+    const params = new URLSearchParams();
+    if (filters?.status) params.append("status", filters.status);
+    if (filters?.order_id) params.append("order_id", filters.order_id.toString());
+    if (filters?.maker_id) params.append("maker_id", filters.maker_id.toString());
+    if (filters?.taker_id) params.append("taker_id", filters.taker_id.toString());
+    if (filters?.page) params.append("page", filters.page.toString());
+    if (filters?.limit) params.append("limit", filters.limit.toString());
+
+    const queryString = params.toString();
+    const endpoint = `/deals${queryString ? `?${queryString}` : ""}`;
+
+    return this.request<{
+      data: any[];
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    }>("GET", endpoint, {
+      telegramUserId,
+    });
+  }
+
+  /**
    * Get all users (paginated, for admins)
    */
   async getAllUsers(
