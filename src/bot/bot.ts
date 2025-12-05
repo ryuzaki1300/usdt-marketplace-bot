@@ -28,6 +28,8 @@ import {
 } from './conversations/createOffer';
 import { commonMessages } from '../ui/messages/common';
 import { getMainMenuKeyboard } from '../ui/keyboards/mainMenu';
+import { getAdminMenuKeyboard } from '../ui/keyboards/admin';
+import { adminMessages } from '../ui/messages/admin';
 
 // Extend Grammy session type
 type MyContext = Context & SessionFlavor<SessionData>;
@@ -249,7 +251,72 @@ export function createBot(): Bot<MyContext> {
 
   bot.callbackQuery('menu:admin', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await ctx.editMessageText('قابلیت منوی مدیریت به زودی اضافه می‌شود!');
+    const userId = ctx.from?.id;
+    if (!userId) {
+      await ctx.editMessageText('خطا در شناسایی کاربر.');
+      return;
+    }
+
+    // Use cached user data from middleware
+    const user = getUserData(ctx);
+    if (user) {
+      const role = (user as any)?.role;
+      const isSuperAdmin = role === "super_admin";
+      await ctx.editMessageText(adminMessages.menu, {
+        reply_markup: getAdminMenuKeyboard(isSuperAdmin),
+      });
+    } else {
+      // Fallback if user data not available
+      await ctx.editMessageText(adminMessages.menu, {
+        reply_markup: getAdminMenuKeyboard(false),
+      });
+    }
+  });
+
+  // Admin menu item handlers
+  bot.callbackQuery('admin:open_deals', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await ctx.editMessageText(adminMessages.openDeals, {
+      reply_markup: getAdminMenuKeyboard((getUserData(ctx) as any)?.role === "super_admin"),
+    });
+  });
+
+  bot.callbackQuery('admin:kyc_requests', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await ctx.editMessageText(adminMessages.kycRequests, {
+      reply_markup: getAdminMenuKeyboard((getUserData(ctx) as any)?.role === "super_admin"),
+    });
+  });
+
+  bot.callbackQuery('admin:users', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await ctx.editMessageText(adminMessages.users, {
+      reply_markup: getAdminMenuKeyboard((getUserData(ctx) as any)?.role === "super_admin"),
+    });
+  });
+
+  bot.callbackQuery('admin:deal_archive', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await ctx.editMessageText(adminMessages.dealArchive, {
+      reply_markup: getAdminMenuKeyboard((getUserData(ctx) as any)?.role === "super_admin"),
+    });
+  });
+
+  bot.callbackQuery('admin:add_admin', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const user = getUserData(ctx);
+    const isSuperAdmin = user && (user as any)?.role === "super_admin";
+    
+    if (!isSuperAdmin) {
+      await ctx.editMessageText('❌ شما دسترسی لازم برای این عملیات را ندارید.', {
+        reply_markup: getAdminMenuKeyboard(false),
+      });
+      return;
+    }
+
+    await ctx.editMessageText(adminMessages.addAdmin, {
+      reply_markup: getAdminMenuKeyboard(true),
+    });
   });
 
   return bot;
