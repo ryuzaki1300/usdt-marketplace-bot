@@ -379,6 +379,15 @@ export class CoreClient {
       telegramUserId,
     });
   }
+
+  /**
+   * Get user by ID (admin only)
+   */
+  async getUserById(userId: number, telegramUserId: number) {
+    return this.request("GET", `/users/${userId}`, {
+      telegramUserId,
+    });
+  }
 }
 
 export const coreClient = new CoreClient();

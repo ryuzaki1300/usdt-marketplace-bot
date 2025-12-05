@@ -25,3 +25,16 @@ export function getBackToAdminMenuKeyboard(): InlineKeyboard {
     .text("🔙 بازگشت به منوی مدیریت", "menu:admin");
 }
 
+export function getUserProfileKeyboard(): InlineKeyboard {
+  return new InlineKeyboard()
+    .text("🔄 تغییر وضعیت کاربر", "admin:user:change_status")
+    .row()
+    .text("✅ تغییر وضعیت KYC", "admin:user:change_kyc")
+    .row()
+    .text("📦 سفارش‌های کاربر", "admin:user:orders")
+    .row()
+    .text("💼 پیشنهادهای باز کاربر", "admin:user:offers")
+    .row()
+    .text("🔙 بازگشت به منوی مدیریت", "menu:admin");
+}
+

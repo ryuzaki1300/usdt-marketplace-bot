@@ -7,7 +7,7 @@ import { userDataMiddleware, getUserData } from './middlewares/userData';
 import { handleStart } from './handlers/start';
 import { handleMyOrders, handleOrderDetails, handleCancelOrder, handleOrderCommand } from './handlers/orders';
 import { handleOfferCommand, handleOfferReject, handleOfferAccept } from './handlers/offers';
-import { handleOpenDeals, handleDealCommand } from './handlers/admin';
+import { handleOpenDeals, handleDealCommand, handleUserCommand } from './handlers/admin';
 import {
   handleOrderCreate,
   handleOrderSide,
@@ -61,6 +61,9 @@ export function createBot(): Bot<MyContext> {
   
   // Handle /deal_<id> command pattern (when admin clicks on /deal_123 in message)
   bot.hears(/^\/deal_\d+$/, handleDealCommand);
+  
+  // Handle /user_<id> command pattern (when admin clicks on /user_123 in message)
+  bot.hears(/^\/user_\d+$/, handleUserCommand);
 
   // Register callback query handlers (for inline keyboards)
   bot.callbackQuery('menu:my_orders', async (ctx) => {

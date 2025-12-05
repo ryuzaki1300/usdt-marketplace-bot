@@ -3,7 +3,7 @@ import { SessionFlavor } from "grammy";
 import { SessionData } from "../../../types/session";
 import { coreClient } from "../../../core/coreClient";
 import { adminMessages } from "../../../ui/messages/admin";
-import { getAdminMenuKeyboard, getBackToAdminMenuKeyboard } from "../../../ui/keyboards/admin";
+import { getAdminMenuKeyboard, getBackToAdminMenuKeyboard, getUserProfileKeyboard } from "../../../ui/keyboards/admin";
 import { getUserData } from "../../middlewares/userData";
 import { defaultDateTime } from "../../../utils/date-helper";
 
@@ -195,5 +195,115 @@ export async function handleDealCommand(ctx: MyContext) {
   }
 
   await handleDealDetails(ctx, dealId);
+}
+
+export async function handleUserProfile(ctx: MyContext, userId: number) {
+  const telegramUserId = ctx.from?.id;
+  if (!telegramUserId) {
+    await ctx.reply("خطا در شناسایی کاربر.");
+    return;
+  }
+
+  // Check if user is admin
+  const user = getUserData(ctx);
+  const role = (user as any)?.role;
+  const isAdmin = role === "admin" || role === "super_admin";
+  
+  if (!isAdmin) {
+    await ctx.reply("❌ شما دسترسی لازم برای مشاهده پروفایل کاربر را ندارید.");
+    return;
+  }
+
+  try {
+    // Get user details
+    const userData = await coreClient.getUserById(userId, telegramUserId);
+    const userInfo = userData as any;
+
+    // Get successful trades count (deals with status completed)
+    let successfulTrades = 0;
+    try {
+      // Get deals where user is maker or taker and status is completed
+      const makerDeals = await coreClient.getDeals(telegramUserId, {
+        maker_id: userId,
+        status: "completed",
+        page: 1,
+        limit: 100,
+      });
+      const takerDeals = await coreClient.getDeals(telegramUserId, {
+        taker_id: userId,
+        status: "completed",
+        page: 1,
+        limit: 100,
+      });
+      
+      const makerDealsData = makerDeals as any;
+      const takerDealsData = takerDeals as any;
+      
+      // Count unique deals (user might be both maker and taker in different deals)
+      const dealIds = new Set();
+      (makerDealsData.data || []).forEach((deal: any) => dealIds.add(deal.id));
+      (takerDealsData.data || []).forEach((deal: any) => dealIds.add(deal.id));
+      successfulTrades = dealIds.size;
+    } catch (error) {
+      console.error("Error fetching successful trades:", error);
+      // Continue with 0 trades if there's an error
+    }
+
+    // Format message using adminMessages.userProfile
+    const message = adminMessages.userProfile({
+      user: userInfo,
+      successfulTrades: successfulTrades,
+    });
+
+    // Send message with keyboard
+    await ctx.reply(message, {
+      reply_markup: getUserProfileKeyboard(),
+      parse_mode: "Markdown",
+    });
+  } catch (error: any) {
+    await ctx.reply(
+      error.message || "خطا در دریافت اطلاعات کاربر. لطفاً دوباره تلاش کنید.",
+      {
+        reply_markup: getBackToAdminMenuKeyboard(),
+      }
+    );
+  }
+}
+
+export async function handleUserCommand(ctx: MyContext) {
+  // Skip if user is in a wizard
+  if (ctx.session.orderWizard || ctx.session.offerWizard) {
+    return;
+  }
+
+  const command = ctx.message?.text;
+  if (!command) {
+    return;
+  }
+
+  // Extract user ID from command like "/user_123"
+  const match = command.match(/^\/user_(\d+)$/);
+  if (!match) {
+    await ctx.reply("فرمت دستور نامعتبر است. لطفاً از فرمت /user_<id> استفاده کنید.");
+    return;
+  }
+
+  const userId = parseInt(match[1], 10);
+  if (isNaN(userId)) {
+    await ctx.reply("شناسه کاربر نامعتبر است.");
+    return;
+  }
+
+  // Check if user is admin
+  const user = getUserData(ctx);
+  const role = (user as any)?.role;
+  const isAdmin = role === "admin" || role === "super_admin";
+  
+  if (!isAdmin) {
+    await ctx.reply("❌ شما دسترسی لازم برای مشاهده پروفایل کاربر را ندارید.");
+    return;
+  }
+
+  await handleUserProfile(ctx, userId);
 }
 
