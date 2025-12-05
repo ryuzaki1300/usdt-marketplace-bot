@@ -71,6 +71,38 @@ export const offerMessages = {
     success: "✅ پیشنهاد با موفقیت پذیرفته شد.",
     error: "❌ خطا در پذیرش پیشنهاد. لطفاً دوباره تلاش کنید.",
     placeholder: "قابلیت پذیرش پیشنهاد به زودی اضافه می‌شود.",
+    toMaker: (data: {
+      order: any;
+      offer: {
+        id: number;
+        price_per_unit: number;
+      };
+    }) => {
+      const side = data.order.side === "buy" ? "🟢 خرید" : "🔴 فروش";
+      let message = "✅ پیشنهاد شما پذیرفته شد!\n\n";
+      message += `سفارش: ${side}\n`;
+      message += `مقدار: ${data.order.amount_usdt} USDT\n`;
+      message += `قیمت: ${data.offer.price_per_unit.toLocaleString()} تومان\n`;
+      message += `قیمت کل: ${(data.order.amount_usdt * data.offer.price_per_unit).toLocaleString()} تومان\n\n`;
+      message += `🔔 معامله ایجاد شد و در حال بررسی توسط ادمین است. به زودی با شما تماس خواهیم گرفت.`;
+      return message;
+    },
+    toTaker: (data: {
+      order: any;
+      offer: {
+        id: number;
+        price_per_unit: number;
+      };
+    }) => {
+      const side = data.order.side === "buy" ? "🟢 خرید" : "🔴 فروش";
+      let message = "✅ پیشنهاد شما پذیرفته شد!\n\n";
+      message += `سفارش: ${side}\n`;
+      message += `مقدار: ${data.order.amount_usdt} USDT\n`;
+      message += `قیمت: ${data.offer.price_per_unit.toLocaleString()} تومان\n`;
+      message += `قیمت کل: ${(data.order.amount_usdt * data.offer.price_per_unit).toLocaleString()} تومان\n\n`;
+      message += `🔔 معامله ایجاد شد و در حال بررسی توسط ادمین است. به زودی با شما تماس خواهیم گرفت.`;
+      return message;
+    },
   },
   existingOffer: (data: {
     order: any;

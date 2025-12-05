@@ -293,6 +293,52 @@ export class CoreClient {
       data,
     });
   }
+
+  /**
+   * Create a deal from an accepted offer
+   */
+  async createDeal(
+    telegramUserId: number,
+    data: {
+      order_id: number;
+      offer_id: number;
+    }
+  ) {
+    return this.request("POST", "/deals", {
+      telegramUserId,
+      data,
+    });
+  }
+
+  /**
+   * Get deal by ID
+   */
+  async getDealById(dealId: number, telegramUserId?: number) {
+    return this.request("GET", `/deals/${dealId}`, {
+      telegramUserId,
+    });
+  }
+
+  /**
+   * Get all users (paginated, for admins)
+   */
+  async getAllUsers(
+    telegramUserId: number,
+    page: number = 1,
+    limit: number = 100
+  ) {
+    return this.request<{
+      data: any[];
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    }>("GET", `/users?page=${page}&limit=${limit}`, {
+      telegramUserId,
+    });
+  }
 }
 
 export const coreClient = new CoreClient();
