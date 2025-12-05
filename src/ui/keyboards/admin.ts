@@ -38,3 +38,26 @@ export function getUserProfileKeyboard(): InlineKeyboard {
     .text("🔙 بازگشت به منوی مدیریت", "menu:admin");
 }
 
+export function getDealStatusKeyboard(dealStatus: string, dealId: number): InlineKeyboard {
+  const keyboard = new InlineKeyboard();
+
+  if (dealStatus === "pending_admin") {
+    keyboard
+      .text("▶️ شروع معامله", `admin:deal:approve:${dealId}`)
+      .row()
+      .text("❌ لغو معامله", `admin:deal:cancel:${dealId}`)
+      .row();
+  } else if (dealStatus === "in_progress") {
+    keyboard
+      .text("✅ تکمیل معامله", `admin:deal:complete:${dealId}`)
+      .row()
+      .text("❌ لغو معامله", `admin:deal:cancel:${dealId}`)
+      .row();
+  }
+  // If cancelled or completed, only show back button
+
+  keyboard.text("🔙 بازگشت به منوی مدیریت", "menu:admin");
+
+  return keyboard;
+}
+

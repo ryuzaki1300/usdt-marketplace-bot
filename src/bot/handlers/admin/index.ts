@@ -3,7 +3,12 @@ import { SessionFlavor } from "grammy";
 import { SessionData } from "../../../types/session";
 import { coreClient } from "../../../core/coreClient";
 import { adminMessages } from "../../../ui/messages/admin";
-import { getAdminMenuKeyboard, getBackToAdminMenuKeyboard, getUserProfileKeyboard } from "../../../ui/keyboards/admin";
+import {
+  getAdminMenuKeyboard,
+  getBackToAdminMenuKeyboard,
+  getUserProfileKeyboard,
+  getDealStatusKeyboard,
+} from "../../../ui/keyboards/admin";
 import { getUserData } from "../../middlewares/userData";
 import { defaultDateTime } from "../../../utils/date-helper";
 
@@ -96,7 +101,7 @@ export async function handleDealDetails(ctx: MyContext, dealId: number) {
   const user = getUserData(ctx);
   const role = (user as any)?.role;
   const isAdmin = role === "admin" || role === "super_admin";
-  
+
   if (!isAdmin) {
     await ctx.reply("❌ شما دسترسی لازم برای مشاهده جزئیات معامله را ندارید.");
     return;
@@ -146,9 +151,13 @@ export async function handleDealDetails(ctx: MyContext, dealId: number) {
       taker: taker,
     });
 
-    // Send message with back button
+    // Get deal status for keyboard
+    const dealStatus = dealData.status || "pending_admin";
+    const currentDealId = dealData.id;
+
+    // Send message with status keyboard
     await ctx.reply(message, {
-      reply_markup: getBackToAdminMenuKeyboard(),
+      reply_markup: getDealStatusKeyboard(dealStatus, currentDealId),
     });
   } catch (error: any) {
     await ctx.reply(
@@ -174,7 +183,9 @@ export async function handleDealCommand(ctx: MyContext) {
   // Extract deal ID from command like "/deal_123"
   const match = command.match(/^\/deal_(\d+)$/);
   if (!match) {
-    await ctx.reply("فرمت دستور نامعتبر است. لطفاً از فرمت /deal_<id> استفاده کنید.");
+    await ctx.reply(
+      "فرمت دستور نامعتبر است. لطفاً از فرمت /deal_<id> استفاده کنید."
+    );
     return;
   }
 
@@ -188,7 +199,7 @@ export async function handleDealCommand(ctx: MyContext) {
   const user = getUserData(ctx);
   const role = (user as any)?.role;
   const isAdmin = role === "admin" || role === "super_admin";
-  
+
   if (!isAdmin) {
     await ctx.reply("❌ شما دسترسی لازم برای مشاهده جزئیات معامله را ندارید.");
     return;
@@ -208,7 +219,7 @@ export async function handleUserProfile(ctx: MyContext, userId: number) {
   const user = getUserData(ctx);
   const role = (user as any)?.role;
   const isAdmin = role === "admin" || role === "super_admin";
-  
+
   if (!isAdmin) {
     await ctx.reply("❌ شما دسترسی لازم برای مشاهده پروفایل کاربر را ندارید.");
     return;
@@ -235,10 +246,10 @@ export async function handleUserProfile(ctx: MyContext, userId: number) {
         page: 1,
         limit: 100,
       });
-      
+
       const makerDealsData = makerDeals as any;
       const takerDealsData = takerDeals as any;
-      
+
       // Count unique deals (user might be both maker and taker in different deals)
       const dealIds = new Set();
       (makerDealsData.data || []).forEach((deal: any) => dealIds.add(deal.id));
@@ -284,7 +295,9 @@ export async function handleUserCommand(ctx: MyContext) {
   // Extract user ID from command like "/user_123"
   const match = command.match(/^\/user_(\d+)$/);
   if (!match) {
-    await ctx.reply("فرمت دستور نامعتبر است. لطفاً از فرمت /user_<id> استفاده کنید.");
+    await ctx.reply(
+      "فرمت دستور نامعتبر است. لطفاً از فرمت /user_<id> استفاده کنید."
+    );
     return;
   }
 
@@ -298,7 +311,7 @@ export async function handleUserCommand(ctx: MyContext) {
   const user = getUserData(ctx);
   const role = (user as any)?.role;
   const isAdmin = role === "admin" || role === "super_admin";
-  
+
   if (!isAdmin) {
     await ctx.reply("❌ شما دسترسی لازم برای مشاهده پروفایل کاربر را ندارید.");
     return;
@@ -306,4 +319,3 @@ export async function handleUserCommand(ctx: MyContext) {
 
   await handleUserProfile(ctx, userId);
 }
-
