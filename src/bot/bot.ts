@@ -1,13 +1,32 @@
-import { Bot, Context, session, SessionFlavor } from 'grammy';
-import { env } from '../config/env';
-import { SessionData } from '../types/session';
-import { loggerMiddleware } from './middlewares/logger';
-import { errorHandlerMiddleware } from './middlewares/errorHandler';
-import { userDataMiddleware, getUserData } from './middlewares/userData';
-import { handleStart } from './handlers/start';
-import { handleMyOrders, handleOrderDetails, handleCancelOrder, handleOrderCommand } from './handlers/orders';
-import { handleOfferCommand, handleOfferReject, handleOfferAccept } from './handlers/offers';
-import { handleOpenDeals, handleDealCommand, handleUserCommand, handleDealApprove, handleDealComplete, handleDealCancel } from './handlers/admin';
+import { Bot, Context, session, SessionFlavor } from "grammy";
+import { env } from "../config/env";
+import { SessionData } from "../types/session";
+import { loggerMiddleware } from "./middlewares/logger";
+import { errorHandlerMiddleware } from "./middlewares/errorHandler";
+import { userDataMiddleware, getUserData } from "./middlewares/userData";
+import { handleStart } from "./handlers/start";
+import {
+  handleMyOrders,
+  handleOrderDetails,
+  handleCancelOrder,
+  handleOrderCommand,
+} from "./handlers/orders";
+import {
+  handleOfferCommand,
+  handleOfferReject,
+  handleOfferAccept,
+  handleMyOffers,
+  handleOfferDetails,
+  handleCancelOffer,
+} from "./handlers/offers";
+import {
+  handleOpenDeals,
+  handleDealCommand,
+  handleUserCommand,
+  handleDealApprove,
+  handleDealComplete,
+  handleDealCancel,
+} from "./handlers/admin";
 import {
   handleOrderCreate,
   handleOrderSide,
@@ -18,7 +37,7 @@ import {
   handleOrderDescription,
   handleOrderConfirm,
   handleOrderCancel,
-} from './conversations/createOrder';
+} from "./conversations/createOrder";
 import {
   handleOfferCreate,
   handleOfferPrice,
@@ -26,11 +45,11 @@ import {
   handleOfferConfirm,
   handleOfferCancel,
   handleOfferOverwrite,
-} from './conversations/createOffer';
-import { commonMessages } from '../ui/messages/common';
-import { getMainMenuKeyboard } from '../ui/keyboards/mainMenu';
-import { getAdminMenuKeyboard } from '../ui/keyboards/admin';
-import { adminMessages } from '../ui/messages/admin';
+} from "./conversations/createOffer";
+import { commonMessages } from "../ui/messages/common";
+import { getMainMenuKeyboard } from "../ui/keyboards/mainMenu";
+import { getAdminMenuKeyboard } from "../ui/keyboards/admin";
+import { adminMessages } from "../ui/messages/admin";
 
 // Extend Grammy session type
 type MyContext = Context & SessionFlavor<SessionData>;
@@ -51,27 +70,27 @@ export function createBot(): Bot<MyContext> {
   bot.use(errorHandlerMiddleware);
 
   // Register command handlers
-  bot.command('start', handleStart);
-  
+  bot.command("start", handleStart);
+
   // Handle /order_<id> command pattern (when user clicks on /order_123 in message)
   bot.hears(/^\/order_\d+$/, handleOrderCommand);
-  
+
   // Handle /offer_<id> or offer_<id> command pattern (when user clicks on /offer_123 in message)
   bot.hears(/^\/?offer_\d+$/, handleOfferCommand);
-  
+
   // Handle /deal_<id> command pattern (when admin clicks on /deal_123 in message)
   bot.hears(/^\/deal_\d+$/, handleDealCommand);
-  
+
   // Handle /user_<id> command pattern (when admin clicks on /user_123 in message)
   bot.hears(/^\/user_\d+$/, handleUserCommand);
 
   // Register callback query handlers (for inline keyboards)
-  bot.callbackQuery('menu:my_orders', async (ctx) => {
+  bot.callbackQuery("menu:my_orders", async (ctx) => {
     await ctx.answerCallbackQuery();
     await handleMyOrders(ctx);
   });
 
-  bot.callbackQuery('order:my_orders', async (ctx) => {
+  bot.callbackQuery("order:my_orders", async (ctx) => {
     await ctx.answerCallbackQuery();
     await handleMyOrders(ctx);
   });
@@ -88,29 +107,40 @@ export function createBot(): Bot<MyContext> {
     await handleCancelOrder(ctx, orderId);
   });
 
-  bot.callbackQuery('menu:my_offers', async (ctx) => {
+  bot.callbackQuery("menu:my_offers", async (ctx) => {
     await ctx.answerCallbackQuery();
-    await ctx.editMessageText('قابلیت پیشنهادهای من به زودی اضافه می‌شود!');
+    await handleMyOffers(ctx);
   });
 
-  bot.callbackQuery('menu:new_order', async (ctx) => {
+  bot.callbackQuery("offer:my_offers", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await handleMyOffers(ctx);
+  });
+
+  bot.callbackQuery(/^offer:cancel_offer:(\d+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const offerId = parseInt(ctx.match[1], 10);
+    await handleCancelOffer(ctx, offerId);
+  });
+
+  bot.callbackQuery("menu:new_order", async (ctx) => {
     await ctx.answerCallbackQuery();
     await handleOrderCreate(ctx);
   });
 
   // Order creation wizard handlers
-  bot.callbackQuery('order:create', async (ctx) => {
+  bot.callbackQuery("order:create", async (ctx) => {
     await ctx.answerCallbackQuery();
     await handleOrderCreate(ctx);
   });
 
   bot.callbackQuery(/^order:side:(buy|sell)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
-    const side = ctx.match[1] as 'buy' | 'sell';
+    const side = ctx.match[1] as "buy" | "sell";
     await handleOrderSide(ctx, side);
   });
 
-  bot.callbackQuery('order:network:done', async (ctx) => {
+  bot.callbackQuery("order:network:done", async (ctx) => {
     await ctx.answerCallbackQuery();
     await handleOrderNetworkDone(ctx);
   });
@@ -119,23 +149,23 @@ export function createBot(): Bot<MyContext> {
     await ctx.answerCallbackQuery();
     const network = ctx.match[1];
     // Skip if it's the "done" button (already handled above)
-    if (network === 'done') {
+    if (network === "done") {
       return;
     }
     await handleOrderNetwork(ctx, network);
   });
 
-  bot.callbackQuery('order:confirm', async (ctx) => {
+  bot.callbackQuery("order:confirm", async (ctx) => {
     await ctx.answerCallbackQuery();
     await handleOrderConfirm(ctx);
   });
 
-  bot.callbackQuery('order:cancel', async (ctx) => {
+  bot.callbackQuery("order:cancel", async (ctx) => {
     await ctx.answerCallbackQuery();
     await handleOrderCancel(ctx);
   });
 
-  bot.callbackQuery('order:skip_description', async (ctx) => {
+  bot.callbackQuery("order:skip_description", async (ctx) => {
     await ctx.answerCallbackQuery();
     await handleOrderDescription(ctx);
   });
@@ -146,22 +176,22 @@ export function createBot(): Bot<MyContext> {
     await handleOfferCreate(ctx, orderId);
   });
 
-  bot.callbackQuery('offer:skip_price', async (ctx) => {
+  bot.callbackQuery("offer:skip_price", async (ctx) => {
     await ctx.answerCallbackQuery();
     await handleOfferPrice(ctx);
   });
 
-  bot.callbackQuery('offer:skip_comment', async (ctx) => {
+  bot.callbackQuery("offer:skip_comment", async (ctx) => {
     await ctx.answerCallbackQuery();
     await handleOfferComment(ctx);
   });
 
-  bot.callbackQuery('offer:confirm', async (ctx) => {
+  bot.callbackQuery("offer:confirm", async (ctx) => {
     await ctx.answerCallbackQuery();
     await handleOfferConfirm(ctx);
   });
 
-  bot.callbackQuery('offer:cancel', async (ctx) => {
+  bot.callbackQuery("offer:cancel", async (ctx) => {
     await ctx.answerCallbackQuery();
     await handleOfferCancel(ctx);
   });
@@ -182,7 +212,7 @@ export function createBot(): Bot<MyContext> {
   });
 
   // Handle text messages during order creation wizard
-  bot.on('message:text', async (ctx) => {
+  bot.on("message:text", async (ctx) => {
     const orderWizard = ctx.session.orderWizard;
     const offerWizard = ctx.session.offerWizard;
 
@@ -191,10 +221,10 @@ export function createBot(): Bot<MyContext> {
       const text = ctx.message.text;
 
       switch (offerWizard.step) {
-        case 'price':
+        case "price":
           await handleOfferPrice(ctx, text);
           break;
-        case 'comment':
+        case "comment":
           await handleOfferComment(ctx, text);
           break;
         default:
@@ -210,13 +240,13 @@ export function createBot(): Bot<MyContext> {
 
       // Handle wizard steps
       switch (orderWizard.step) {
-        case 'amount':
+        case "amount":
           await handleOrderAmount(ctx, text);
           break;
-        case 'price':
+        case "price":
           await handleOrderPrice(ctx, text);
           break;
-        case 'description':
+        case "description":
           await handleOrderDescription(ctx, text);
           break;
         default:
@@ -227,11 +257,11 @@ export function createBot(): Bot<MyContext> {
   });
 
   // Handle back to main menu
-  bot.callbackQuery('menu:main', async (ctx) => {
+  bot.callbackQuery("menu:main", async (ctx) => {
     await ctx.answerCallbackQuery();
     const userId = ctx.from?.id;
     if (!userId) {
-      await ctx.editMessageText('خطا در شناسایی کاربر.');
+      await ctx.editMessageText("خطا در شناسایی کاربر.");
       return;
     }
 
@@ -251,16 +281,16 @@ export function createBot(): Bot<MyContext> {
     }
   });
 
-  bot.callbackQuery('menu:profile', async (ctx) => {
+  bot.callbackQuery("menu:profile", async (ctx) => {
     await ctx.answerCallbackQuery();
-    await ctx.editMessageText('قابلیت پروفایل به زودی اضافه می‌شود!');
+    await ctx.editMessageText("قابلیت پروفایل به زودی اضافه می‌شود!");
   });
 
-  bot.callbackQuery('menu:admin', async (ctx) => {
+  bot.callbackQuery("menu:admin", async (ctx) => {
     await ctx.answerCallbackQuery();
     const userId = ctx.from?.id;
     if (!userId) {
-      await ctx.editMessageText('خطا در شناسایی کاربر.');
+      await ctx.editMessageText("خطا در شناسایی کاربر.");
       return;
     }
 
@@ -281,41 +311,50 @@ export function createBot(): Bot<MyContext> {
   });
 
   // Admin menu item handlers
-  bot.callbackQuery('admin:open_deals', async (ctx) => {
+  bot.callbackQuery("admin:open_deals", async (ctx) => {
     await ctx.answerCallbackQuery();
     await handleOpenDeals(ctx);
   });
 
-  bot.callbackQuery('admin:kyc_requests', async (ctx) => {
+  bot.callbackQuery("admin:kyc_requests", async (ctx) => {
     await ctx.answerCallbackQuery();
     await ctx.editMessageText(adminMessages.kycRequests, {
-      reply_markup: getAdminMenuKeyboard((getUserData(ctx) as any)?.role === "super_admin"),
+      reply_markup: getAdminMenuKeyboard(
+        (getUserData(ctx) as any)?.role === "super_admin"
+      ),
     });
   });
 
-  bot.callbackQuery('admin:users', async (ctx) => {
+  bot.callbackQuery("admin:users", async (ctx) => {
     await ctx.answerCallbackQuery();
     await ctx.editMessageText(adminMessages.users, {
-      reply_markup: getAdminMenuKeyboard((getUserData(ctx) as any)?.role === "super_admin"),
+      reply_markup: getAdminMenuKeyboard(
+        (getUserData(ctx) as any)?.role === "super_admin"
+      ),
     });
   });
 
-  bot.callbackQuery('admin:deal_archive', async (ctx) => {
+  bot.callbackQuery("admin:deal_archive", async (ctx) => {
     await ctx.answerCallbackQuery();
     await ctx.editMessageText(adminMessages.dealArchive, {
-      reply_markup: getAdminMenuKeyboard((getUserData(ctx) as any)?.role === "super_admin"),
+      reply_markup: getAdminMenuKeyboard(
+        (getUserData(ctx) as any)?.role === "super_admin"
+      ),
     });
   });
 
-  bot.callbackQuery('admin:add_admin', async (ctx) => {
+  bot.callbackQuery("admin:add_admin", async (ctx) => {
     await ctx.answerCallbackQuery();
     const user = getUserData(ctx);
     const isSuperAdmin = user && (user as any)?.role === "super_admin";
-    
+
     if (!isSuperAdmin) {
-      await ctx.editMessageText('❌ شما دسترسی لازم برای این عملیات را ندارید.', {
-        reply_markup: getAdminMenuKeyboard(false),
-      });
+      await ctx.editMessageText(
+        "❌ شما دسترسی لازم برای این عملیات را ندارید.",
+        {
+          reply_markup: getAdminMenuKeyboard(false),
+        }
+      );
       return;
     }
 
@@ -342,4 +381,3 @@ export function createBot(): Bot<MyContext> {
 
   return bot;
 }
-

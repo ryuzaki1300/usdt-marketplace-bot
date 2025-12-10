@@ -129,5 +129,85 @@ export const offerMessages = {
     success: "✅ پیشنهاد شما با موفقیت به‌روزرسانی شد!",
     error: "❌ خطا در به‌روزرسانی پیشنهاد. لطفاً دوباره تلاش کنید.",
   },
+  myOffers: {
+    title: "💼 پیشنهادهای من",
+    noOffers: "شما هنوز پیشنهادی ثبت نکرده‌اید.",
+    allOffers: (offers: any[]) => {
+      if (offers.length === 0) {
+        return "شما هنوز پیشنهادی ثبت نکرده‌اید.";
+      }
+
+      let message = "";
+      
+      offers.forEach((offer, index) => {
+        const order = offer.order || {};
+        const side = order.side === "buy" ? "🟢 خرید" : "🔴 فروش";
+        const createdAt = offer.created_at 
+          ? new Date(offer.created_at).toLocaleDateString("fa-IR")
+          : new Date().toLocaleDateString("fa-IR");
+        const totalPrice = (order.amount_usdt || 0) * (offer.price_per_unit || 0);
+        
+        message += `پیشنهاد ${index + 1}\n\n`;
+        message += `تاریخ: ${createdAt}\n`;
+        message += `نوع: ${side}\n`;
+        message += `مقدار: ${order.amount_usdt || 0} USDT\n`;
+        message += `قیمت هر واحد: ${(offer.price_per_unit || 0).toLocaleString()} تومان\n`;
+        message += `قیمت کل: ${totalPrice.toLocaleString()} تومان\n`;
+        message += `\n/offer_${offer.id}\n`;
+        
+        // Add separator between offers (except after the last one)
+        if (index < offers.length - 1) {
+          message += `\n--------------------------------\n\n`;
+        }
+      });
+      
+      return message;
+    },
+  },
+  offerDetails: {
+    title: (offer: any) => {
+      const order = offer.order || {};
+      const side = order.side === "buy" ? "🟢 خرید" : "🔴 فروش";
+      const createdAt = offer.created_at 
+        ? new Date(offer.created_at).toLocaleDateString("fa-IR")
+        : new Date().toLocaleDateString("fa-IR");
+      const totalPrice = (order.amount_usdt || 0) * (offer.price_per_unit || 0);
+      
+      let message = `پیشنهاد ${offer.id}\n\n`;
+      message += `تاریخ: ${createdAt}\n`;
+      message += `نوع: ${side}\n`;
+      message += `مقدار: ${order.amount_usdt || 0} USDT\n`;
+      message += `قیمت هر واحد: ${(offer.price_per_unit || 0).toLocaleString()} تومان\n`;
+      message += `قیمت کل: ${totalPrice.toLocaleString()} تومان\n`;
+      
+      if (order.network) {
+        message += `شبکه: ${order.network}\n`;
+      }
+      
+      if (offer.comment) {
+        message += `نظر: ${offer.comment}\n`;
+      }
+      
+      return message;
+    },
+    cancelSuccess: "✅ پیشنهاد با موفقیت لغو شد.",
+    cancelError: "❌ خطا در لغو پیشنهاد. لطفاً دوباره تلاش کنید.",
+    notFound: "❌ پیشنهاد یافت نشد.",
+  },
+  offerCanceledByTaker: (data: {
+    order: any;
+    offer: {
+      id: number;
+      price_per_unit: number;
+    };
+  }) => {
+    const side = data.order.side === "buy" ? "🟢 خرید" : "🔴 فروش";
+    let message = "❌ پیشنهاد شما توسط پیشنهاددهنده لغو شد\n\n";
+    message += `سفارش: ${side}\n`;
+    message += `مقدار: ${data.order.amount_usdt} USDT\n`;
+    message += `قیمت پیشنهادی: ${data.offer.price_per_unit.toLocaleString()} تومان\n`;
+    message += `\nپیشنهاددهنده پیشنهاد خود را لغو کرد.`;
+    return message;
+  },
 };
 

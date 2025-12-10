@@ -249,11 +249,23 @@ export class CoreClient {
     data: {
       price_per_unit?: number;
       comment?: string;
+      status?: string;
     }
   ) {
     return this.request("PATCH", `/order-offers/${offerId}`, {
       telegramUserId,
       data,
+    });
+  }
+
+  /**
+   * Get user offers (taker offers)
+   */
+  async getUserOffers(
+    telegramUserId: number,
+  ) {
+    return this.request("GET", "/order-offers/taker/me", {
+      telegramUserId,
     });
   }
 

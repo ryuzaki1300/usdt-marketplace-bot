@@ -3,12 +3,14 @@ import { SessionData } from "../../../types/session";
 import { handleOfferCreate } from "../../conversations/createOffer";
 import { coreClient } from "../../../core/coreClient";
 import { offerMessages } from "../../../ui/messages/offers";
+import { offerKeyboards } from "../../../ui/keyboards/offers";
 import { getMainMenuKeyboard } from "../../../ui/keyboards/mainMenu";
 import { getUserData } from "../../middlewares/userData";
 import { channelMessages } from "../../../ui/messages/channel";
 import { channelKeyboards } from "../../../ui/keyboards/channel";
 import { adminMessages } from "../../../ui/messages/admin";
 import { env } from "../../../config/env";
+import { commonMessages } from "../../../ui/messages/common";
 
 type MyContext = Context & SessionFlavor<SessionData>;
 
@@ -23,20 +25,20 @@ export async function handleOfferCommand(ctx: MyContext) {
     return;
   }
 
-  // Extract order ID from command like "/offer_123" or "offer_123"
+  // Extract offer ID from command like "/offer_123" or "offer_123"
   const match = command.match(/^\/?offer_(\d+)$/);
   if (!match) {
     await ctx.reply("فرمت دستور نامعتبر است. لطفاً از فرمت /offer_<id> استفاده کنید.");
     return;
   }
 
-  const orderId = parseInt(match[1], 10);
-  if (isNaN(orderId)) {
-    await ctx.reply("شناسه سفارش نامعتبر است.");
+  const offerId = parseInt(match[1], 10);
+  if (isNaN(offerId)) {
+    await ctx.reply("شناسه پیشنهاد نامعتبر است.");
     return;
   }
 
-  await handleOfferCreate(ctx, orderId);
+  await handleOfferDetails(ctx, offerId);
 }
 
 export async function handleOfferReject(ctx: MyContext, offerId: number) {
@@ -285,6 +287,174 @@ export async function handleOfferAccept(ctx: MyContext, offerId: number) {
   } catch (error: any) {
     await ctx.reply(
       error.message || offerMessages.offerAccepted.error,
+      {
+        reply_markup: getMainMenuKeyboard(false),
+      }
+    );
+  }
+}
+
+export async function handleMyOffers(ctx: MyContext) {
+  const userId = ctx.from?.id;
+  if (!userId) {
+    await ctx.reply("شناسایی کاربر امکان‌پذیر نیست.");
+    return;
+  }
+
+  try {
+    // Get user offers with pending_maker_decision status
+    const response = await coreClient.getUserOffers(userId);
+    const offers = response as any;
+
+    if (offers.length === 0) {
+      // No offers - try to edit, otherwise send new message
+      try {
+        await ctx.editMessageText(offerMessages.myOffers.noOffers, {
+          reply_markup: offerKeyboards.myOffersEmpty(),
+        });
+      } catch {
+        await ctx.reply(offerMessages.myOffers.noOffers, {
+          reply_markup: offerKeyboards.myOffersEmpty(),
+        });
+      }
+      return;
+    }
+
+    // Send all offers in a single message
+    const message = offerMessages.myOffers.allOffers(offers);
+    const keyboard = offerKeyboards.allOffers();
+    
+    try {
+      await ctx.editMessageText(message, {
+        reply_markup: keyboard,
+      });
+    } catch {
+      await ctx.reply(message, {
+        reply_markup: keyboard,
+      });
+    }
+  } catch (error: any) {
+    const errorMessage = error.message || "خطا در دریافت پیشنهادها. لطفاً دوباره تلاش کنید.";
+    try {
+      await ctx.editMessageText(errorMessage, {
+        reply_markup: getMainMenuKeyboard(false),
+      });
+    } catch {
+      await ctx.reply(errorMessage, {
+        reply_markup: getMainMenuKeyboard(false),
+      });
+    }
+  }
+}
+
+export async function handleOfferDetails(ctx: MyContext, offerId: number) {
+  const userId = ctx.from?.id;
+  if (!userId) {
+    // Try to answer callback query if it exists, otherwise just return
+    try {
+      await ctx.answerCallbackQuery("شناسایی کاربر امکان‌پذیر نیست.");
+    } catch {
+      // Not a callback query, ignore
+    }
+    return;
+  }
+
+  // Try to answer callback query if it exists
+  try {
+    await ctx.answerCallbackQuery();
+  } catch {
+    // Not a callback query, ignore
+  }
+
+  try {
+    // Get offer details
+    const offer = await coreClient.getOfferById(offerId, userId);
+    const offerData = offer as any;
+
+    // Build message with offer details
+    const message = offerMessages.offerDetails.title(offerData);
+
+    // Send as a new message
+    await ctx.reply(message, {
+      reply_markup: offerKeyboards.offerDetails(offerId),
+    });
+  } catch (error: any) {
+    await ctx.reply(
+      error.message || offerMessages.offerDetails.notFound,
+      {
+        reply_markup: getMainMenuKeyboard(false),
+      }
+    );
+  }
+}
+
+export async function handleCancelOffer(ctx: MyContext, offerId: number) {
+  const userId = ctx.from?.id;
+  if (!userId) {
+    await ctx.answerCallbackQuery("شناسایی کاربر امکان‌پذیر نیست.");
+    return;
+  }
+
+  await ctx.answerCallbackQuery();
+
+  try {
+    // Get offer details before canceling to have the offer and order data
+    const offer = await coreClient.getOfferById(offerId, userId);
+    const offerData = offer as any;
+
+    if (!offerData.order_id) {
+      throw new Error("اطلاعات پیشنهاد ناقص است.");
+    }
+
+    // Get order details for notification
+    const order = await coreClient.getOrderWithMaker(offerData.order_id, userId);
+    const orderData = order as any;
+
+    // Cancel the offer by updating status to canceled_by_taker
+    await coreClient.updateOffer(offerId, userId, {
+      status: "canceled_by_taker",
+    });
+
+    // Update the message to show it was canceled
+    try {
+      await ctx.editMessageText(
+        (ctx.callbackQuery?.message?.text || "") + "\n\n❌ این پیشنهاد لغو شد.",
+        {
+          reply_markup: undefined, // Remove buttons
+        }
+      );
+      // send home message and menu keyboard
+      await ctx.reply(commonMessages.welcome(), {
+        reply_markup: getMainMenuKeyboard(getUserData(ctx).role === "admin" || getUserData(ctx).role === "super_admin"),
+      });
+    } catch {
+      // If we can't edit, send a new message and menu keyboard
+      await ctx.reply(offerMessages.offerDetails.cancelSuccess, {
+        reply_markup: getMainMenuKeyboard(getUserData(ctx).role === "admin" || getUserData(ctx).role === "super_admin"),
+      });
+    }
+    // Send notification to maker if we have their telegram ID
+    const makerTelegramUserId = orderData.maker?.telegram_user_id;
+    if (makerTelegramUserId) {
+      try {
+        await ctx.api.sendMessage(
+          makerTelegramUserId,
+          offerMessages.offerCanceledByTaker({
+            order: orderData,
+            offer: {
+              id: offerId,
+              price_per_unit: offerData.price_per_unit,
+            },
+          })
+        );
+      } catch (error: any) {
+        // If we can't send to maker (e.g., they blocked the bot), just log it
+        console.error("Failed to notify maker:", error);
+      }
+    }
+  } catch (error: any) {
+    await ctx.reply(
+      error.message || offerMessages.offerDetails.cancelError,
       {
         reply_markup: getMainMenuKeyboard(false),
       }

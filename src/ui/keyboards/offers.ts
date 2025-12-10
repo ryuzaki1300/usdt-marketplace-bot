@@ -37,4 +37,21 @@ export const offerKeyboards = {
       .row()
       .text("❌ لغو", "offer:cancel");
   },
+
+  myOffersEmpty: (): InlineKeyboard => {
+    return new InlineKeyboard()
+      .text("🔙 بازگشت به منوی اصلی", "menu:main");
+  },
+
+  allOffers: (): InlineKeyboard => {
+    return new InlineKeyboard()
+      .text("🔙 بازگشت به منوی اصلی", "menu:main");
+  },
+
+  offerDetails: (offerId: number): InlineKeyboard => {
+    return new InlineKeyboard()
+      .text("❌ لغو پیشنهاد", `offer:cancel_offer:${offerId}`)
+      .row()
+      .text("🔙 بازگشت به لیست پیشنهادها", "offer:my_offers");
+  },
 };

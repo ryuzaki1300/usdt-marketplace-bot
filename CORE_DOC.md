@@ -153,7 +153,7 @@ For user-specific operations, include:
 | POST | `/order-offers` | Create a new offer | `x-api-key`, `x-telegram-user-id` | Yes |
 | GET | `/order-offers` | Get all offers (paginated, filterable) | `x-api-key` | No |
 | GET | `/order-offers/order/:order_id/pending` | Get pending offers for order | `x-api-key` | No |
-| GET | `/order-offers/taker/me` | Get my offers | `x-api-key`, `x-telegram-user-id` | No |
+| GET | `/order-offers/taker/me` | Get my pending offers | `x-api-key`, `x-telegram-user-id` | No |
 | GET | `/order-offers/:id` | Get offer by ID | `x-api-key` | No |
 | PATCH | `/order-offers/:id` | Update offer | `x-api-key` | No |
 | DELETE | `/order-offers/:id` | Delete offer | `x-api-key` | No |
