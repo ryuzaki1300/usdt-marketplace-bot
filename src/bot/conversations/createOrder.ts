@@ -11,24 +11,18 @@ import { getKycRequiredKeyboard } from "../../ui/keyboards/kyc";
 import { env } from "../../config/env";
 import { channelMessages } from "../../ui/messages/channel";
 import { channelKeyboards } from "../../ui/keyboards/channel";
+import {
+  requireUserId,
+  safeEditOrReply,
+  silentErrorHandling,
+} from "../utils/errorHandling";
+import { requireApprovedKyc, requireWizardState } from "../utils/validations";
 
 type MyContext = Context & SessionFlavor<SessionData>;
 
 export async function handleOrderCreate(ctx: MyContext) {
-  const userId = ctx.from?.id;
-  if (!userId) {
-    await ctx.reply("شناسایی کاربر امکان‌پذیر نیست.");
-    return;
-  }
-
-  const user = getUserData(ctx);
-  console.log(user)
-  if (user.kyc_status !== 'approved') {
-    await ctx.reply(kycMessages.kycRequired, {
-      reply_markup: getKycRequiredKeyboard(),
-    });
-    return;
-  }
+  const userId = requireUserId(ctx);
+  requireApprovedKyc(ctx);
 
   // Initialize wizard state
   ctx.session.orderWizard = {
@@ -41,10 +35,7 @@ export async function handleOrderCreate(ctx: MyContext) {
 }
 
 export async function handleOrderSide(ctx: MyContext, side: "buy" | "sell") {
-  if (!ctx.session.orderWizard) {
-    await ctx.reply("لطفاً از منوی اصلی شروع کنید.");
-    return;
-  }
+  requireWizardState(ctx.session.orderWizard);
 
   ctx.session.orderWizard.side = side;
   ctx.session.orderWizard.step = "amount";
@@ -193,142 +184,91 @@ export async function handleOrderDescription(
 }
 
 export async function handleOrderConfirm(ctx: MyContext) {
-  const userId = ctx.from?.id;
-  if (!userId || !ctx.session.orderWizard) {
-    await ctx.reply("خطا در پردازش درخواست.");
-    return;
-  }
+  const userId = requireUserId(ctx);
+  const wizard = requireWizardState(ctx.session.orderWizard);
 
-  const wizard = ctx.session.orderWizard;
   if (!wizard.side || !wizard.amount || !wizard.price) {
     await ctx.reply("اطلاعات سفارش ناقص است.");
     return;
   }
 
-  try {
-    const orderResponse = await coreClient.createOrder(userId, {
-      side: wizard.side,
-      amount_usdt: wizard.amount,
-      price_per_unit: wizard.price,
-      network: wizard.network,
-      description: wizard.description,
+  const orderResponse = await coreClient.createOrder(userId, {
+    side: wizard.side,
+    amount_usdt: wizard.amount,
+    price_per_unit: wizard.price,
+    network: wizard.network,
+    description: wizard.description,
+  });
+
+  // Get order ID from response
+  const orderId =
+    (orderResponse as any)?.id || (orderResponse as any)?.data?.id;
+
+  // Clear wizard state
+  ctx.session.orderWizard = undefined;
+
+  // Show success message and redirect to my_orders
+  await safeEditOrReply(ctx, orderMessages.createOrder.success);
+
+  // Send message to public channel with button
+  const orderData = {
+    id: orderId,
+    side: wizard.side,
+    amount_usdt: wizard.amount,
+    price_per_unit: wizard.price,
+    network: wizard.network,
+    description: wizard.description,
+    created_at: new Date().toISOString(),
+    status: "open",
+  };
+
+  const channelMessage = await ctx.api.sendMessage(
+    env.PUBLIC_ORDER_CHANNEL,
+    channelMessages.orderCreated(orderData),
+    {
+      reply_markup: channelKeyboards.orderCreated(orderData),
+    }
+  );
+
+  // Store message data in core using order-telegram-meta
+  await silentErrorHandling(async () => {
+    await coreClient.createOrderTelegramMeta({
+      order_id: orderId,
+      chat_id: channelMessage.chat.id,
+      message_id: channelMessage.message_id,
     });
+  }, "storing order telegram meta");
 
-    // Get order ID from response
-    const orderId = (orderResponse as any)?.id || (orderResponse as any)?.data?.id;
+  // Send my_orders as a new message
+  await silentErrorHandling(async () => {
+    const response = await coreClient.getUserOrders(userId);
+    const orders = response.data || [];
 
-    // Clear wizard state
-    ctx.session.orderWizard = undefined;
-
-    // Show success message and redirect to my_orders
-    await ctx.editMessageText(orderMessages.createOrder.success);
-
-    // Send message to public channel with button
-    const orderData = {
-      id: orderId,
-      side: wizard.side,
-      amount_usdt: wizard.amount,
-      price_per_unit: wizard.price,
-      network: wizard.network,
-      description: wizard.description,
-      created_at: new Date().toISOString(),
-      status: "open",
-    };
-    
-    const channelMessage = await ctx.api.sendMessage(
-      env.PUBLIC_ORDER_CHANNEL,
-      channelMessages.orderCreated(orderData),
-      {
-        reply_markup: channelKeyboards.orderCreated(orderData),
-      }
-    );
-
-    // Store message data in core using order-telegram-meta
-    try {
-      await coreClient.createOrderTelegramMeta({
-        order_id: orderId,
-        chat_id: channelMessage.chat.id,
-        message_id: channelMessage.message_id,
+    if (orders.length === 0) {
+      await ctx.reply(orderMessages.myOrders.noOrders, {
+        reply_markup: orderKeyboards.myOrdersEmpty(),
       });
-    } catch (error: any) {
-      // Log error but don't fail the order creation
-      console.error("Failed to store order telegram meta:", error);
-    }
+    } else {
+      // Send all orders in a single message
+      const message = orderMessages.myOrders.allOrders(orders);
+      const keyboard = orderKeyboards.allOrders(orders);
 
-    // Send my_orders as a new message
-    try {
-      const response = await coreClient.getUserOrders(userId);
-      const orders = response.data || [];
-
-      if (orders.length === 0) {
-        await ctx.reply(orderMessages.myOrders.noOrders, {
-          reply_markup: orderKeyboards.myOrdersEmpty(),
-        });
-      } else {
-        // Send all orders in a single message
-        const message = orderMessages.myOrders.allOrders(orders);
-        const keyboard = orderKeyboards.allOrders(orders);
-        
-        await ctx.reply(message, {
-          reply_markup: keyboard,
-        });
-      }
-    } catch (error: any) {
-      // If fetching orders fails, just show success message
-      // Error is already handled
+      await ctx.reply(message, {
+        reply_markup: keyboard,
+      });
     }
-  } catch (error: any) {
-    await ctx.editMessageText(
-      error.message || orderMessages.createOrder.error,
-      {
-        reply_markup: getMainMenuKeyboard(false),
-      }
-    );
-  }
+  }, "fetching and displaying user orders");
 }
 
 export async function handleOrderCancel(ctx: MyContext) {
   ctx.session.orderWizard = undefined;
 
   // Get user role for main menu
-  const userId = ctx.from?.id;
-  if (!userId) {
-    try {
-      await ctx.editMessageText(orderMessages.createOrder.cancelled, {
-        reply_markup: getMainMenuKeyboard(false),
-      });
-    } catch {
-      await ctx.reply(orderMessages.createOrder.cancelled, {
-        reply_markup: getMainMenuKeyboard(false),
-      });
-    }
-    return;
-  }
+  const user = getUserData(ctx);
+  const role = (user as any)?.role;
+  const isAdmin = role === "admin" || role === "super_admin";
 
-  try {
-    const user = await coreClient.getUserProfile(userId);
-    const role = (user as any)?.role;
-    const isAdmin = role === "admin" || role === "super_admin";
-
-    try {
-      await ctx.editMessageText(orderMessages.createOrder.cancelled, {
-        reply_markup: getMainMenuKeyboard(isAdmin),
-      });
-    } catch {
-      // If we can't edit (e.g., message is too old), send a new message
-      await ctx.reply(orderMessages.createOrder.cancelled, {
-        reply_markup: getMainMenuKeyboard(isAdmin),
-      });
-    }
-  } catch {
-    try {
-      await ctx.editMessageText(orderMessages.createOrder.cancelled, {
-        reply_markup: getMainMenuKeyboard(false),
-      });
-    } catch {
-      await ctx.reply(orderMessages.createOrder.cancelled, {
-        reply_markup: getMainMenuKeyboard(false),
-      });
-    }
-  }
+  await safeEditOrReply(ctx, orderMessages.createOrder.cancelled, {
+    reply_markup: getMainMenuKeyboard(isAdmin),
+  });
 }

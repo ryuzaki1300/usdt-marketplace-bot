@@ -3,31 +3,17 @@ import { SessionData } from "../../../types/session";
 import { getUserData } from "../../middlewares/userData";
 import { profileMessages } from "../../../ui/messages/profile";
 import { getProfileKeyboard } from "../../../ui/keyboards/profile";
+import { requireUserId, safeEditOrReply } from "../../utils/errorHandling";
 
 type MyContext = Context & SessionFlavor<SessionData>;
 
 export async function handleProfile(ctx: MyContext) {
-  const userId = ctx.from?.id;
-  if (!userId) {
-    const errorMsg = "خطا در شناسایی کاربر.";
-    if (ctx.callbackQuery) {
-      await ctx.editMessageText(errorMsg);
-    } else {
-      await ctx.reply(errorMsg);
-    }
-    return;
-  }
+  requireUserId(ctx);
 
   // Get user data from context (cached by middleware)
   const user = getUserData(ctx);
   if (!user) {
-    const errorMsg = "خطا در دریافت اطلاعات کاربر. لطفاً دوباره تلاش کنید.";
-    if (ctx.callbackQuery) {
-      await ctx.editMessageText(errorMsg);
-    } else {
-      await ctx.reply(errorMsg);
-    }
-    return;
+    throw new Error("خطا در دریافت اطلاعات کاربر. لطفاً دوباره تلاش کنید.");
   }
 
   const userData = user as any;
@@ -42,20 +28,9 @@ export async function handleProfile(ctx: MyContext) {
   // Get keyboard based on KYC status
   const keyboard = getProfileKeyboard(userData.kyc_status || "none");
 
-  const messageOptions = {
+  // Use safeEditOrReply to handle both edit and reply cases
+  await safeEditOrReply(ctx, message, {
     reply_markup: keyboard,
-    parse_mode: "Markdown" as const,
-  };
-
-  // Try to edit message if it's a callback query, otherwise reply
-  if (ctx.callbackQuery) {
-    try {
-      await ctx.editMessageText(message, messageOptions);
-    } catch (error) {
-      // If editing fails, send a new message
-      await ctx.reply(message, messageOptions);
-    }
-  } else {
-    await ctx.reply(message, messageOptions);
-  }
+    parse_mode: "Markdown",
+  });
 }

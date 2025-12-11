@@ -5,21 +5,21 @@ import { getMainMenuKeyboard } from "../../ui/keyboards/mainMenu";
 import { SessionData } from "../../types/session";
 import { SessionFlavor } from "grammy";
 import { handleOfferCreate } from "../conversations/createOffer";
+import { requireUserId } from "../utils/errorHandling";
 
 type MyContext = Context & SessionFlavor<SessionData>;
 
 export async function handleStart(ctx: CommandContext<MyContext>) {
-  const userId = ctx.from?.id;
+  const userId = requireUserId(ctx);
   const firstName = ctx.from?.first_name;
-
-  if (!userId) {
-    await ctx.reply("شناسایی کاربر امکان‌پذیر نیست. لطفاً دوباره تلاش کنید.");
-    return;
-  }
 
   // Check for deep link parameters (e.g., /start offer_123)
   const startParam = ctx.match;
-  if (startParam && typeof startParam === 'string' && startParam.startsWith('offer_')) {
+  if (
+    startParam &&
+    typeof startParam === "string" &&
+    startParam.startsWith("offer_")
+  ) {
     // Extract order ID from parameter like "offer_123"
     const match = startParam.match(/^offer_(\d+)$/);
     if (match) {
