@@ -101,6 +101,22 @@ export class CoreClient {
   }
 
   /**
+   * Update current user profile
+   */
+  async updateProfile(
+    telegramUserId: number,
+    data: {
+      full_name?: string;
+      phone_number?: string;
+    }
+  ) {
+    return this.request("PATCH", "/users/me", {
+      telegramUserId,
+      data,
+    });
+  }
+
+  /**
    * Get user orders
    * First gets the user profile to get internal user ID, then fetches orders
    */

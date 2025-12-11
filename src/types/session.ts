@@ -24,4 +24,10 @@ export interface SessionData {
     step?: "price" | "comment" | "summary";
     existing_offer_id?: number; // If set, we're overwriting an existing offer
   };
+  // Profile edit wizard state
+  profileWizard?: {
+    full_name?: string;
+    phone_number?: string;
+    step?: "full_name" | "phone_number";
+  };
 }

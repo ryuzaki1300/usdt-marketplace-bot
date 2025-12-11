@@ -46,6 +46,15 @@ import {
   handleOfferCancel,
   handleOfferOverwrite,
 } from "./conversations/createOffer";
+import {
+  handleProfileEdit,
+  handleProfileUseCurrentFullName,
+  handleProfileFullName,
+  handleProfileUseCurrentPhoneNumber,
+  handleProfilePhoneNumberFromContact,
+  handleProfilePhoneNumber,
+  handleProfileEditCancel,
+} from "./conversations/editProfile";
 import { commonMessages } from "../ui/messages/common";
 import { getMainMenuKeyboard } from "../ui/keyboards/mainMenu";
 import { getAdminMenuKeyboard } from "../ui/keyboards/admin";
@@ -216,8 +225,27 @@ export function createBot(): Bot<MyContext> {
   bot.on("message:text", async (ctx) => {
     const orderWizard = ctx.session.orderWizard;
     const offerWizard = ctx.session.offerWizard;
+    const profileWizard = ctx.session.profileWizard;
 
-    // Handle offer wizard first (if active)
+    // Handle profile wizard first (if active)
+    if (profileWizard) {
+      const text = ctx.message.text;
+
+      switch (profileWizard.step) {
+        case "full_name":
+          await handleProfileFullName(ctx, text);
+          break;
+        case "phone_number":
+          await handleProfilePhoneNumber(ctx, text);
+          break;
+        default:
+          // Ignore text in other steps
+          break;
+      }
+      return;
+    }
+
+    // Handle offer wizard (if active)
     if (offerWizard) {
       const text = ctx.message.text;
 
@@ -257,6 +285,15 @@ export function createBot(): Bot<MyContext> {
     }
   });
 
+  // Handle contact messages (for phone number sharing)
+  bot.on("message:contact", async (ctx) => {
+    const profileWizard = ctx.session.profileWizard;
+
+    if (profileWizard && profileWizard.step === "phone_number") {
+      await handleProfilePhoneNumberFromContact(ctx);
+    }
+  });
+
   // Handle back to main menu
   bot.callbackQuery("menu:main", async (ctx) => {
     await ctx.answerCallbackQuery();
@@ -285,6 +322,22 @@ export function createBot(): Bot<MyContext> {
   bot.callbackQuery("menu:profile", async (ctx) => {
     await ctx.answerCallbackQuery();
     await handleProfile(ctx);
+  });
+
+  // Profile edit handlers
+  bot.callbackQuery("profile:edit", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await handleProfileEdit(ctx);
+  });
+
+  bot.callbackQuery("profile:use_current_fullname", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await handleProfileUseCurrentFullName(ctx);
+  });
+
+  bot.callbackQuery("profile:edit_cancel", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await handleProfileEditCancel(ctx);
   });
 
   bot.callbackQuery("menu:admin", async (ctx) => {

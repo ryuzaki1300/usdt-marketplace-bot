@@ -26,4 +26,23 @@ export const profileMessages = {
 
     return message;
   },
+  editProfile: {
+    enterFullName: (currentFullName?: string) => {
+      let message = "📝 لطفاً نام کامل خود را وارد کنید:\n";
+      if (currentFullName) {
+        message += `\nنام فعلی: ${currentFullName}`;
+      }
+      return message;
+    },
+    enterPhoneNumber: (currentPhoneNumber?: string) => {
+      let message = "📱 لطفاً شماره تلفن خود را وارد کنید:\n";
+      if (currentPhoneNumber) {
+        message += `\nشماره فعلی: \`${currentPhoneNumber}\``;
+      }
+      return message;
+    },
+    invalidPhoneNumber: "❌ شماره تلفن وارد شده نامعتبر است. لطفاً شماره را به فرمت صحیح وارد کنید (مثال: +989123456789 یا 09123456789)",
+    success: "✅ پروفایل شما با موفقیت به‌روزرسانی شد.",
+    cancelled: "❌ ویرایش پروفایل لغو شد.",
+  },
 };
