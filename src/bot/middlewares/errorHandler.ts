@@ -1,26 +1,40 @@
-import { MiddlewareFn, Context } from 'grammy';
+import { MiddlewareFn, Context, SessionFlavor } from 'grammy';
 import { ApiError } from '../../core/coreClient';
+import { SessionData } from '../../types/session';
+import { 
+  getErrorMessage, 
+  isApiError, 
+  isTelegramBlockedError,
+  safeAnswerCallbackQuery,
+  safeEditOrReply 
+} from '../utils/errorHandling';
+import { getMainMenuKeyboard } from '../../ui/keyboards/mainMenu';
 
-export const errorHandlerMiddleware: MiddlewareFn<Context> = async (ctx, next) => {
+type MyContext = Context & SessionFlavor<SessionData>;
+
+export const errorHandlerMiddleware: MiddlewareFn<MyContext> = async (ctx, next) => {
   try {
     await next();
   } catch (error) {
+    // Log error for debugging
     console.error('Error in middleware:', error);
 
-    let message = 'خطایی رخ داد. لطفاً بعداً دوباره تلاش کنید.';
+    // Get user-friendly error message
+    const message = getErrorMessage(error);
 
-    // Show server error message directly to user
-    if (error && typeof error === 'object' && 'message' in error) {
-      const apiError = error as ApiError;
-      message = apiError.message || message;
-    } else if (error instanceof Error) {
-      // For non-API errors, log but show generic message
-      message = 'خطای غیرمنتظره‌ای رخ داد. لطفاً بعداً دوباره تلاش کنید.';
-    }
+    // Try to answer callback query if it exists
+    await safeAnswerCallbackQuery(ctx, {
+      text: message,
+      show_alert: true,
+    });
 
+    // Send error message with fallback to edit or reply
     try {
-      await ctx.reply(message);
+      await safeEditOrReply(ctx, message, {
+        reply_markup: getMainMenuKeyboard(false),
+      });
     } catch (replyError) {
+      // If even error reply fails, log it
       console.error('Failed to send error message:', replyError);
     }
   }
