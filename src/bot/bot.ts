@@ -50,6 +50,7 @@ import { commonMessages } from "../ui/messages/common";
 import { getMainMenuKeyboard } from "../ui/keyboards/mainMenu";
 import { getAdminMenuKeyboard } from "../ui/keyboards/admin";
 import { adminMessages } from "../ui/messages/admin";
+import { handleProfile } from "./handlers/profile";
 
 // Extend Grammy session type
 type MyContext = Context & SessionFlavor<SessionData>;
@@ -283,7 +284,7 @@ export function createBot(): Bot<MyContext> {
 
   bot.callbackQuery("menu:profile", async (ctx) => {
     await ctx.answerCallbackQuery();
-    await ctx.editMessageText("قابلیت پروفایل به زودی اضافه می‌شود!");
+    await handleProfile(ctx);
   });
 
   bot.callbackQuery("menu:admin", async (ctx) => {
