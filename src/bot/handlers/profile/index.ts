@@ -1,5 +1,5 @@
 import { Context, SessionFlavor } from "grammy";
-import { SessionData } from "../../types/session";
+import { SessionData } from "../../../types/session";
 import { getUserData } from "../../middlewares/userData";
 import { profileMessages } from "../../../ui/messages/profile";
 import { getProfileKeyboard } from "../../../ui/keyboards/profile";
