@@ -185,19 +185,14 @@ export async function handleOfferAccept(ctx: MyContext, offerId: number) {
 
     // Try to get admins if current user is admin or super_admin
     if (currentUserRole === "admin" || currentUserRole === "super_admin") {
-      // Get all admins and super_admins using admins_only parameter
+      // Get all admins using the public /users/admins endpoint
       let admins: any[] = [];
       let page = 1;
       let hasMore = true;
 
       while (hasMore) {
         try {
-          const usersResponse = await coreClient.getAllUsers(
-            userId,
-            page,
-            100,
-            true
-          );
+          const usersResponse = await coreClient.getAllAdmins(page, 100);
           const usersData = usersResponse as any;
           admins = admins.concat(usersData.data || []);
           hasMore = usersData.hasNext || false;
@@ -205,10 +200,7 @@ export async function handleOfferAccept(ctx: MyContext, offerId: number) {
         } catch (error: any) {
           // If we can't get more users, stop trying
           hasMore = false;
-          if (error.statusCode !== 403) {
-            // Log non-permission errors
-            console.error("Error fetching admins:", error);
-          }
+          console.error("Error fetching admins:", error);
         }
       }
 

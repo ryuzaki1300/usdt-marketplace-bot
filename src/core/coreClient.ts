@@ -148,9 +148,13 @@ export class CoreClient {
       totalPages: number;
       hasNext: boolean;
       hasPrev: boolean;
-    }>("GET", `/orders?maker_id=${userId}&status=${status}&page=${page}&limit=${limit}`, {
-      telegramUserId,
-    });
+    }>(
+      "GET",
+      `/orders?maker_id=${userId}&status=${status}&page=${page}&limit=${limit}`,
+      {
+        telegramUserId,
+      }
+    );
   }
 
   /**
@@ -277,9 +281,7 @@ export class CoreClient {
   /**
    * Get user offers (taker offers)
    */
-  async getUserOffers(
-    telegramUserId: number,
-  ) {
+  async getUserOffers(telegramUserId: number) {
     return this.request("GET", "/order-offers/taker/me", {
       telegramUserId,
     });
@@ -363,9 +365,12 @@ export class CoreClient {
   ) {
     const params = new URLSearchParams();
     if (filters?.status) params.append("status", filters.status);
-    if (filters?.order_id) params.append("order_id", filters.order_id.toString());
-    if (filters?.maker_id) params.append("maker_id", filters.maker_id.toString());
-    if (filters?.taker_id) params.append("taker_id", filters.taker_id.toString());
+    if (filters?.order_id)
+      params.append("order_id", filters.order_id.toString());
+    if (filters?.maker_id)
+      params.append("maker_id", filters.maker_id.toString());
+    if (filters?.taker_id)
+      params.append("taker_id", filters.taker_id.toString());
     if (filters?.page) params.append("page", filters.page.toString());
     if (filters?.limit) params.append("limit", filters.limit.toString());
 
@@ -383,6 +388,21 @@ export class CoreClient {
     }>("GET", endpoint, {
       telegramUserId,
     });
+  }
+
+  /**
+   * Get all admins (paginated, public endpoint - no authentication required)
+   */
+  async getAllAdmins(page: number = 1, limit: number = 100) {
+    return this.request<{
+      data: any[];
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    }>("GET", `/users/admins?page=${page}&limit=${limit}`);
   }
 
   /**
@@ -441,6 +461,38 @@ export class CoreClient {
   async cancelDeal(dealId: number, telegramUserId: number) {
     return this.request("POST", `/deals/${dealId}/cancel`, {
       telegramUserId,
+    });
+  }
+
+  /**
+   * Submit KYC application
+   */
+  async submitKyc(
+    telegramUserId: number,
+    data: {
+      full_name?: string;
+      phone_number?: string;
+    }
+  ) {
+    return this.request("POST", "/users/me/kyc/submit", {
+      telegramUserId,
+      data,
+    });
+  }
+
+  /**
+   * Review KYC application (admin only)
+   */
+  async reviewKyc(
+    userId: number,
+    telegramUserId: number,
+    data: {
+      status: "approved" | "rejected";
+    }
+  ) {
+    return this.request("POST", `/users/${userId}/kyc/review`, {
+      telegramUserId,
+      data,
     });
   }
 }

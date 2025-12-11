@@ -60,6 +60,13 @@ import { getMainMenuKeyboard } from "../ui/keyboards/mainMenu";
 import { getAdminMenuKeyboard } from "../ui/keyboards/admin";
 import { adminMessages } from "../ui/messages/admin";
 import { handleProfile } from "./handlers/profile";
+import {
+  handleKycRequest,
+  handleKycConfirm,
+  handleKycCancel,
+  handleKycAdminApprove,
+  handleKycAdminReject,
+} from "./handlers/kyc";
 
 // Extend Grammy session type
 type MyContext = Context & SessionFlavor<SessionData>;
@@ -338,6 +345,32 @@ export function createBot(): Bot<MyContext> {
   bot.callbackQuery("profile:edit_cancel", async (ctx) => {
     await ctx.answerCallbackQuery();
     await handleProfileEditCancel(ctx);
+  });
+
+  // KYC handlers
+  bot.callbackQuery("profile:request_kyc", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await handleKycRequest(ctx);
+  });
+
+  bot.callbackQuery("kyc:confirm", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await handleKycConfirm(ctx);
+  });
+
+  bot.callbackQuery("kyc:cancel", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await handleKycCancel(ctx);
+  });
+
+  bot.callbackQuery(/^kyc:admin:approve:(\d+)$/, async (ctx) => {
+    const userId = parseInt(ctx.match[1], 10);
+    await handleKycAdminApprove(ctx, userId);
+  });
+
+  bot.callbackQuery(/^kyc:admin:reject:(\d+)$/, async (ctx) => {
+    const userId = parseInt(ctx.match[1], 10);
+    await handleKycAdminReject(ctx, userId);
   });
 
   bot.callbackQuery("menu:admin", async (ctx) => {

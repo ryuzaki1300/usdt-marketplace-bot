@@ -19,7 +19,9 @@ export const profileEditKeyboards = {
   fullNameStep: (currentFullName?: string): InlineKeyboard => {
     const keyboard = new InlineKeyboard();
     if (currentFullName) {
-      keyboard.text(`استفاده از: ${currentFullName}`, "profile:use_current_fullname").row();
+      keyboard
+        .text(`استفاده از: ${currentFullName}`, "profile:use_current_fullname")
+        .row();
     }
     keyboard.text("❌ لغو", "profile:edit_cancel");
     return keyboard;
@@ -28,16 +30,32 @@ export const profileEditKeyboards = {
     const keyboard = new Keyboard()
       .requestContact("📱 استفاده از شماره تلگرام")
       .row();
-    
+
     if (currentPhoneNumber) {
       keyboard.text(`استفاده از: ${currentPhoneNumber}`).row();
     }
-    
+
     keyboard.text("❌ لغو");
-    
+
     return keyboard.resized();
   },
   cancel: (): InlineKeyboard => {
     return new InlineKeyboard().text("❌ لغو", "profile:edit_cancel");
+  },
+};
+
+export const kycKeyboards = {
+  confirmation: (): InlineKeyboard => {
+    return new InlineKeyboard()
+      .text("✅ تایید", "kyc:confirm")
+      .text("✏️ ویرایش پروفایل", "profile:edit")
+      .row()
+      .text("❌ لغو", "kyc:cancel");
+  },
+  adminReview: (userId: number): InlineKeyboard => {
+    return new InlineKeyboard()
+      .text("✅ تایید", `kyc:admin:approve:${userId}`)
+      .text("❌ رد", `kyc:admin:reject:${userId}`)
+      .row();
   },
 };

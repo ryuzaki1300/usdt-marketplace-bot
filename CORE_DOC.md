@@ -48,6 +48,7 @@ All API requests require the following header:
 For user-specific operations, include:
 
 - **`x-telegram-user-id`** (Optional): Telegram user ID for user authentication
+
   - Used to identify the authenticated user
   - Automatically creates user account if it doesn't exist
   - Required for endpoints that modify user-specific data
@@ -59,17 +60,20 @@ For user-specific operations, include:
 ### Authorization Levels
 
 **User Roles** (hierarchical):
+
 - `user`: Basic access, can submit KYC, view own profile, create orders/offers
 - `admin`: Can manage users, review KYC, block users, approve/complete deals
 - `super_admin`: Full access, can delete users, create admins
 
 **KYC Status**:
+
 - `none`: No KYC submitted
 - `pending`: KYC submitted, awaiting admin review
 - `approved`: KYC approved, user can trade
 - `rejected`: KYC rejected
 
 **User Status**:
+
 - `active`: User can access the system
 - `blocked`: User is blocked from accessing the system
 
@@ -87,57 +91,64 @@ For user-specific operations, include:
 
 #### Public Endpoints
 
-| Method | Endpoint | Description | Headers Required |
-|--------|----------|-------------|------------------|
-| POST | `/users` | Create a new user | `x-api-key` |
-| GET | `/users/telegram/:telegram_user_id` | Get user by Telegram ID | `x-api-key` |
+| Method | Endpoint                            | Description             | Headers Required |
+| ------ | ----------------------------------- | ----------------------- | ---------------- |
+| POST   | `/users`                            | Create a new user       | `x-api-key`      |
+| GET    | `/users/telegram/:telegram_user_id` | Get user by Telegram ID | `x-api-key`      |
 
 #### Authenticated User Endpoints
 
-| Method | Endpoint | Description | Headers Required | KYC Required |
-|--------|----------|-------------|------------------|--------------|
-| GET | `/users/me/profile` | Get current user profile | `x-api-key`, `x-telegram-user-id` | No |
-| PATCH | `/users/me` | Update current user profile | `x-api-key`, `x-telegram-user-id` | No |
-| POST | `/users/me/kyc/submit` | Submit KYC application | `x-api-key`, `x-telegram-user-id` | No |
+| Method | Endpoint               | Description                 | Headers Required                  | KYC Required |
+| ------ | ---------------------- | --------------------------- | --------------------------------- | ------------ |
+| GET    | `/users/me/profile`    | Get current user profile    | `x-api-key`, `x-telegram-user-id` | No           |
+| PATCH  | `/users/me`            | Update current user profile | `x-api-key`, `x-telegram-user-id` | No           |
+| POST   | `/users/me/kyc/submit` | Submit KYC application      | `x-api-key`, `x-telegram-user-id` | No           |
+| GET    | `/users/admins`        | Get all admins (paginated)  | `x-api-key`                       | No           |
 
 #### Admin Endpoints
 
-| Method | Endpoint | Description | Headers Required | Role Required |
-|--------|----------|-------------|------------------|---------------|
-| GET | `/users` | Get all users (paginated) | `x-api-key`, `x-telegram-user-id` | admin, super_admin |
-| GET | `/users/:id` | Get user by ID | `x-api-key`, `x-telegram-user-id` | admin, super_admin |
-| PATCH | `/users/:id` | Update user | `x-api-key`, `x-telegram-user-id` | admin, super_admin |
-| GET | `/users/kyc/pending` | Get pending KYC requests | `x-api-key`, `x-telegram-user-id` | admin, super_admin |
-| GET | `/users/blocked` | Get blocked users | `x-api-key`, `x-telegram-user-id` | admin, super_admin |
-| POST | `/users/:id/block` | Block a user | `x-api-key`, `x-telegram-user-id` | admin, super_admin |
-| POST | `/users/:id/kyc/review` | Review KYC application | `x-api-key`, `x-telegram-user-id` | admin, super_admin |
+| Method | Endpoint                | Description               | Headers Required                  | Role Required      |
+| ------ | ----------------------- | ------------------------- | --------------------------------- | ------------------ |
+| GET    | `/users`                | Get all users (paginated) | `x-api-key`, `x-telegram-user-id` | admin, super_admin |
+| GET    | `/users/:id`            | Get user by ID            | `x-api-key`, `x-telegram-user-id` | admin, super_admin |
+| PATCH  | `/users/:id`            | Update user               | `x-api-key`, `x-telegram-user-id` | admin, super_admin |
+| GET    | `/users/kyc/pending`    | Get pending KYC requests  | `x-api-key`, `x-telegram-user-id` | admin, super_admin |
+| GET    | `/users/blocked`        | Get blocked users         | `x-api-key`, `x-telegram-user-id` | admin, super_admin |
+| POST   | `/users/:id/block`      | Block a user              | `x-api-key`, `x-telegram-user-id` | admin, super_admin |
+| POST   | `/users/:id/kyc/review` | Review KYC application    | `x-api-key`, `x-telegram-user-id` | admin, super_admin |
 
 **Query Parameters for GET `/users`**:
+
 - `page` (optional): Page number (default: 1, min: 1)
 - `limit` (optional): Items per page (default: 10, min: 1, max: 100)
-- `admins_only` (optional): If `true` or `1`, returns only users with `admin` or `super_admin` role (default: `false`)
+
+**Query Parameters for GET `/users/admins`**:
+
+- `page` (optional): Page number (default: 1, min: 1)
+- `limit` (optional): Items per page (default: 10, min: 1, max: 100)
 
 #### Super Admin Endpoints
 
-| Method | Endpoint | Description | Headers Required | Role Required |
-|--------|----------|-------------|------------------|---------------|
-| DELETE | `/users/:id` | Delete user | `x-api-key`, `x-telegram-user-id` | super_admin |
-| POST | `/users/:id/admin/create` | Create an admin | `x-api-key`, `x-telegram-user-id` | super_admin |
+| Method | Endpoint                  | Description     | Headers Required                  | Role Required |
+| ------ | ------------------------- | --------------- | --------------------------------- | ------------- |
+| DELETE | `/users/:id`              | Delete user     | `x-api-key`, `x-telegram-user-id` | super_admin   |
+| POST   | `/users/:id/admin/create` | Create an admin | `x-api-key`, `x-telegram-user-id` | super_admin   |
 
 ### Order Endpoints (`/orders`)
 
-| Method | Endpoint | Description | Headers Required | KYC Required |
-|--------|----------|-------------|------------------|--------------|
-| POST | `/orders` | Create a new order | `x-api-key`, `x-telegram-user-id` | Yes |
-| GET | `/orders` | Get all orders (paginated, filterable) | `x-api-key` | No |
-| GET | `/orders/open` | Get all open orders | `x-api-key` | No |
-| GET | `/orders/maker/:maker_id` | Get orders by maker | `x-api-key` | No |
-| GET | `/orders/:id` | Get order by ID | `x-api-key` | No |
-| PATCH | `/orders/:id` | Update order | `x-api-key` | No |
-| DELETE | `/orders/:id` | Delete order | `x-api-key` | No |
-| POST | `/orders/:id/cancel` | Cancel order | `x-api-key` | No |
+| Method | Endpoint                  | Description                            | Headers Required                  | KYC Required |
+| ------ | ------------------------- | -------------------------------------- | --------------------------------- | ------------ |
+| POST   | `/orders`                 | Create a new order                     | `x-api-key`, `x-telegram-user-id` | Yes          |
+| GET    | `/orders`                 | Get all orders (paginated, filterable) | `x-api-key`                       | No           |
+| GET    | `/orders/open`            | Get all open orders                    | `x-api-key`                       | No           |
+| GET    | `/orders/maker/:maker_id` | Get orders by maker                    | `x-api-key`                       | No           |
+| GET    | `/orders/:id`             | Get order by ID                        | `x-api-key`                       | No           |
+| PATCH  | `/orders/:id`             | Update order                           | `x-api-key`                       | No           |
+| DELETE | `/orders/:id`             | Delete order                           | `x-api-key`                       | No           |
+| POST   | `/orders/:id/cancel`      | Cancel order                           | `x-api-key`                       | No           |
 
 **Query Parameters for GET `/orders`**:
+
 - `status` (optional): Filter by status - `open`, `matched`, `canceled`
 - `side` (optional): Filter by side - `buy`, `sell`
 - `maker_id` (optional): Filter by maker user ID
@@ -145,23 +156,25 @@ For user-specific operations, include:
 - `limit` (optional): Items per page (default: 10, min: 1, max: 100)
 
 **Query Parameters for GET `/orders/open`**:
+
 - `side` (optional): Filter by side - `buy`, `sell`
 
 ### Order Offer Endpoints (`/order-offers`)
 
-| Method | Endpoint | Description | Headers Required | KYC Required |
-|--------|----------|-------------|------------------|--------------|
-| POST | `/order-offers` | Create a new offer | `x-api-key`, `x-telegram-user-id` | Yes |
-| GET | `/order-offers` | Get all offers (paginated, filterable) | `x-api-key` | No |
-| GET | `/order-offers/order/:order_id/pending` | Get pending offers for order | `x-api-key` | No |
-| GET | `/order-offers/taker/me` | Get my pending offers | `x-api-key`, `x-telegram-user-id` | No |
-| GET | `/order-offers/:id` | Get offer by ID | `x-api-key` | No |
-| PATCH | `/order-offers/:id` | Update offer | `x-api-key` | No |
-| DELETE | `/order-offers/:id` | Delete offer | `x-api-key` | No |
-| POST | `/order-offers/:id/reject` | Reject offer (maker action) | `x-api-key`, `x-telegram-user-id` | No |
-| POST | `/order-offers/:id/cancel` | Cancel offer (taker action) | `x-api-key`, `x-telegram-user-id` | No |
+| Method | Endpoint                                | Description                            | Headers Required                  | KYC Required |
+| ------ | --------------------------------------- | -------------------------------------- | --------------------------------- | ------------ |
+| POST   | `/order-offers`                         | Create a new offer                     | `x-api-key`, `x-telegram-user-id` | Yes          |
+| GET    | `/order-offers`                         | Get all offers (paginated, filterable) | `x-api-key`                       | No           |
+| GET    | `/order-offers/order/:order_id/pending` | Get pending offers for order           | `x-api-key`                       | No           |
+| GET    | `/order-offers/taker/me`                | Get my pending offers                  | `x-api-key`, `x-telegram-user-id` | No           |
+| GET    | `/order-offers/:id`                     | Get offer by ID                        | `x-api-key`                       | No           |
+| PATCH  | `/order-offers/:id`                     | Update offer                           | `x-api-key`                       | No           |
+| DELETE | `/order-offers/:id`                     | Delete offer                           | `x-api-key`                       | No           |
+| POST   | `/order-offers/:id/reject`              | Reject offer (maker action)            | `x-api-key`, `x-telegram-user-id` | No           |
+| POST   | `/order-offers/:id/cancel`              | Cancel offer (taker action)            | `x-api-key`, `x-telegram-user-id` | No           |
 
 **Query Parameters for GET `/order-offers`**:
+
 - `order_id` (optional): Filter by order ID
 - `taker_id` (optional): Filter by taker user ID
 - `status` (optional): Filter by status - `pending_maker_decision`, `accepted_by_maker`, `rejected_by_maker`, `canceled_by_taker`
@@ -170,20 +183,21 @@ For user-specific operations, include:
 
 ### Deal Endpoints (`/deals`)
 
-| Method | Endpoint | Description | Headers Required | KYC Required | Role Required |
-|--------|----------|-------------|------------------|--------------|---------------|
-| POST | `/deals` | Create a new deal from accepted offer | `x-api-key`, `x-telegram-user-id` | Yes | No |
-| GET | `/deals` | Get all deals (paginated, filterable) | `x-api-key` | No | No |
-| GET | `/deals/pending` | Get pending deals | `x-api-key` | No | No |
-| GET | `/deals/user/:user_id` | Get deals by user | `x-api-key` | No | No |
-| GET | `/deals/:id` | Get deal by ID | `x-api-key` | No | No |
-| PATCH | `/deals/:id` | Update deal | `x-api-key` | No | No |
-| DELETE | `/deals/:id` | Delete deal | `x-api-key` | No | No |
-| POST | `/deals/:id/approve` | Approve deal | `x-api-key`, `x-telegram-user-id` | No | admin, super_admin |
-| POST | `/deals/:id/complete` | Complete deal | `x-api-key`, `x-telegram-user-id` | No | admin, super_admin |
-| POST | `/deals/:id/cancel` | Cancel deal | `x-api-key`, `x-telegram-user-id` | No | admin, super_admin |
+| Method | Endpoint               | Description                           | Headers Required                  | KYC Required | Role Required      |
+| ------ | ---------------------- | ------------------------------------- | --------------------------------- | ------------ | ------------------ |
+| POST   | `/deals`               | Create a new deal from accepted offer | `x-api-key`, `x-telegram-user-id` | Yes          | No                 |
+| GET    | `/deals`               | Get all deals (paginated, filterable) | `x-api-key`                       | No           | No                 |
+| GET    | `/deals/pending`       | Get pending deals                     | `x-api-key`                       | No           | No                 |
+| GET    | `/deals/user/:user_id` | Get deals by user                     | `x-api-key`                       | No           | No                 |
+| GET    | `/deals/:id`           | Get deal by ID                        | `x-api-key`                       | No           | No                 |
+| PATCH  | `/deals/:id`           | Update deal                           | `x-api-key`                       | No           | No                 |
+| DELETE | `/deals/:id`           | Delete deal                           | `x-api-key`                       | No           | No                 |
+| POST   | `/deals/:id/approve`   | Approve deal                          | `x-api-key`, `x-telegram-user-id` | No           | admin, super_admin |
+| POST   | `/deals/:id/complete`  | Complete deal                         | `x-api-key`, `x-telegram-user-id` | No           | admin, super_admin |
+| POST   | `/deals/:id/cancel`    | Cancel deal                           | `x-api-key`, `x-telegram-user-id` | No           | admin, super_admin |
 
 **Query Parameters for GET `/deals`**:
+
 - `order_id` (optional): Filter by order ID
 - `maker_id` (optional): Filter by maker user ID
 - `taker_id` (optional): Filter by taker user ID
@@ -193,17 +207,18 @@ For user-specific operations, include:
 
 ### Order Telegram Meta Endpoints (`/order-telegram-meta`)
 
-| Method | Endpoint | Description | Headers Required |
-|--------|----------|-------------|------------------|
-| POST | `/order-telegram-meta` | Create telegram metadata for order | `x-api-key` |
-| GET | `/order-telegram-meta` | Get all metadata (paginated) | `x-api-key` |
-| GET | `/order-telegram-meta/order/:order_id` | Get metadata by order ID | `x-api-key` |
-| GET | `/order-telegram-meta/:id` | Get metadata by ID | `x-api-key` |
-| PATCH | `/order-telegram-meta/:id` | Update metadata | `x-api-key` |
-| PATCH | `/order-telegram-meta/order/:order_id` | Update metadata by order ID | `x-api-key` |
-| DELETE | `/order-telegram-meta/:id` | Delete metadata | `x-api-key` |
+| Method | Endpoint                               | Description                        | Headers Required |
+| ------ | -------------------------------------- | ---------------------------------- | ---------------- |
+| POST   | `/order-telegram-meta`                 | Create telegram metadata for order | `x-api-key`      |
+| GET    | `/order-telegram-meta`                 | Get all metadata (paginated)       | `x-api-key`      |
+| GET    | `/order-telegram-meta/order/:order_id` | Get metadata by order ID           | `x-api-key`      |
+| GET    | `/order-telegram-meta/:id`             | Get metadata by ID                 | `x-api-key`      |
+| PATCH  | `/order-telegram-meta/:id`             | Update metadata                    | `x-api-key`      |
+| PATCH  | `/order-telegram-meta/order/:order_id` | Update metadata by order ID        | `x-api-key`      |
+| DELETE | `/order-telegram-meta/:id`             | Delete metadata                    | `x-api-key`      |
 
 **Query Parameters for GET `/order-telegram-meta`**:
+
 - `page` (optional): Page number (default: 1, min: 1)
 - `limit` (optional): Items per page (default: 10, min: 1, max: 100)
 
@@ -296,7 +311,7 @@ Request body for reviewing KYC application (admin only):
 
 ```typescript
 {
-  status: 'approved' | 'rejected';  // Required
+  status: "approved" | "rejected"; // Required
 }
 ```
 
@@ -319,7 +334,8 @@ Request body for creating a new order:
 }
 ```
 
-**Note**: 
+**Note**:
+
 - Creates order with `status: 'open'`
 - `maker_id` is automatically set from authenticated user
 - `total_price` is calculated as `amount_usdt * price_per_unit` if not provided
@@ -356,6 +372,7 @@ Request body for creating an offer on an order:
 ```
 
 **Note**:
+
 - Creates offer with `status: 'pending_maker_decision'`
 - `taker_id` is automatically set from authenticated user
 - Order must exist and have `status: 'open'`
@@ -383,12 +400,13 @@ Request body for creating a deal from an accepted offer:
 
 ```typescript
 {
-  order_id: number;               // Required
-  offer_id: number;               // Required
+  order_id: number; // Required
+  offer_id: number; // Required
 }
 ```
 
 **Note**:
+
 - Creates deal with `status: 'pending_admin'`
 - Order `maker_id` must match authenticated user
 - Offer must exist, be accepted, and belong to the order
@@ -544,8 +562,8 @@ The `type` field in error responses can be used for programmatic error handling:
 {
   id: number;
   // ... resource-specific fields
-  created_at: string;  // ISO 8601 date string
-  updated_at: string;  // ISO 8601 date string
+  created_at: string; // ISO 8601 date string
+  updated_at: string; // ISO 8601 date string
 }
 ```
 
@@ -576,36 +594,44 @@ The `type` field in error responses can be used for programmatic error handling:
 ### User Registration and KYC Flow
 
 1. **Create User Account**:
+
    ```
    POST /users
    Headers: x-api-key
    Body: { telegram_user_id: 123456789, ... }
    ```
+
    - User is created with `role: 'user'`, `kyc_status: 'none'`, `status: 'active'`
 
 2. **Update Profile** (Optional):
+
    ```
    PATCH /users/me
    Headers: x-api-key, x-telegram-user-id
    Body: { full_name: "John Doe", phone_number: "+1234567890" }
    ```
+
    - Updates user profile information
    - Does not affect KYC status
 
 3. **Submit KYC Application**:
+
    ```
    POST /users/me/kyc/submit
    Headers: x-api-key, x-telegram-user-id
    Body: { full_name: "John Doe", phone_number: "+1234567890" }
    ```
+
    - Sets `kyc_status` to `'pending'`
    - Sets `kyc_submitted_at` to current timestamp
 
 4. **Check KYC Status**:
+
    ```
    GET /users/me/profile
    Headers: x-api-key, x-telegram-user-id
    ```
+
    - Returns user profile with current `kyc_status`
 
 5. **Admin Reviews KYC** (Admin only):
@@ -620,57 +646,69 @@ The `type` field in error responses can be used for programmatic error handling:
 ### Order Creation and Trading Flow
 
 1. **Create Order** (KYC required):
+
    ```
    POST /orders
    Headers: x-api-key, x-telegram-user-id
    Body: { side: 'sell', amount_usdt: 1000, price_per_unit: 55000, ... }
    ```
+
    - Order created with `status: 'open'`
    - `maker_id` set from authenticated user
 
 2. **View Open Orders**:
+
    ```
    GET /orders/open?side=sell
    Headers: x-api-key
    ```
 
 3. **Make Offer on Order** (KYC required):
+
    ```
    POST /order-offers
    Headers: x-api-key, x-telegram-user-id
    Body: { order_id: 1, price_per_unit: 54500, comment: "Can negotiate" }
    ```
+
    - Offer created with `status: 'pending_maker_decision'`
    - `taker_id` set from authenticated user
 
 4. **Maker Reviews Offers**:
+
    ```
    GET /order-offers/order/1/pending
    Headers: x-api-key
    ```
 
 5. **Maker Accepts Offer** (Creates Deal):
+
    ```
    POST /deals
    Headers: x-api-key, x-telegram-user-id
    Body: { order_id: 1, offer_id: 1 }
    ```
+
    - Deal created with `status: 'pending_admin'`
    - Order `status` set to `'matched'`
    - Offer `status` set to `'accepted_by_maker'`
 
 6. **Maker Rejects Offer**:
+
    ```
    POST /order-offers/1/reject
    Headers: x-api-key, x-telegram-user-id
    ```
+
    - Offer `status` set to `'rejected_by_maker'`
 
 7. **Admin Approves Deal** (Admin only):
+
    ```
    POST /deals/1/approve
    Headers: x-api-key, x-telegram-user-id
    ```
+
    - Deal `status` set to `'in_progress'`
 
 8. **Admin Completes Deal** (Admin only):
@@ -683,18 +721,22 @@ The `type` field in error responses can be used for programmatic error handling:
 ### Order Cancellation Flow
 
 1. **Cancel Order**:
+
    ```
    POST /orders/1/cancel
    Headers: x-api-key
    ```
+
    - Only works if `order.status === 'open'`
    - Sets `order.status` to `'canceled'`
 
 2. **Cancel Offer** (Taker only):
+
    ```
    POST /order-offers/1/cancel
    Headers: x-api-key, x-telegram-user-id
    ```
+
    - Only works if `offer.status === 'pending_maker_decision'`
    - Sets `offer.status` to `'canceled_by_taker'`
 
@@ -720,6 +762,7 @@ All list endpoints support pagination:
 - Response includes `total` and `totalPages` for display
 
 **Example**:
+
 ```
 GET /orders?page=2&limit=20
 ```
@@ -733,6 +776,7 @@ Many endpoints support filtering via query parameters:
 - Filters are case-sensitive for enum values
 
 **Example**:
+
 ```
 GET /orders?status=open&side=sell&page=1&limit=10
 ```
@@ -742,15 +786,18 @@ GET /orders?status=open&side=sell&page=1&limit=10
 Entities have strict status transition rules:
 
 **Order Status Flow**:
+
 - `open` → `matched` (when deal is created)
 - `open` → `canceled` (when canceled)
 
 **Offer Status Flow**:
+
 - `pending_maker_decision` → `accepted_by_maker` (when deal is created)
 - `pending_maker_decision` → `rejected_by_maker` (when rejected)
 - `pending_maker_decision` → `canceled_by_taker` (when canceled)
 
 **Deal Status Flow**:
+
 - `pending_admin` → `in_progress` (when approved by admin)
 - `in_progress` → `completed` (when completed by admin)
 - Any status → `cancelled` (when canceled by admin, except `completed`)
@@ -789,4 +836,3 @@ For API support, error reporting, or feature requests, contact the API administr
 API Version: 1.0
 
 Last Updated: 2025-01-27
-
