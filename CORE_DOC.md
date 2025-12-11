@@ -97,6 +97,7 @@ For user-specific operations, include:
 | Method | Endpoint | Description | Headers Required | KYC Required |
 |--------|----------|-------------|------------------|--------------|
 | GET | `/users/me/profile` | Get current user profile | `x-api-key`, `x-telegram-user-id` | No |
+| PATCH | `/users/me` | Update current user profile | `x-api-key`, `x-telegram-user-id` | No |
 | POST | `/users/me/kyc/submit` | Submit KYC application | `x-api-key`, `x-telegram-user-id` | No |
 
 #### Admin Endpoints
@@ -262,6 +263,19 @@ Request body for updating a user (admin only):
   status?: 'active' | 'blocked';
 }
 ```
+
+#### UpdateProfileDto
+
+Request body for updating user profile:
+
+```typescript
+{
+  full_name?: string;     // Optional, max 150 characters
+  phone_number?: string;  // Optional, max 50 characters
+}
+```
+
+**Note**: Only updates `full_name` and `phone_number` fields. Does not affect KYC status.
 
 #### SubmitKycDto
 
@@ -569,7 +583,16 @@ The `type` field in error responses can be used for programmatic error handling:
    ```
    - User is created with `role: 'user'`, `kyc_status: 'none'`, `status: 'active'`
 
-2. **Submit KYC Application**:
+2. **Update Profile** (Optional):
+   ```
+   PATCH /users/me
+   Headers: x-api-key, x-telegram-user-id
+   Body: { full_name: "John Doe", phone_number: "+1234567890" }
+   ```
+   - Updates user profile information
+   - Does not affect KYC status
+
+3. **Submit KYC Application**:
    ```
    POST /users/me/kyc/submit
    Headers: x-api-key, x-telegram-user-id
@@ -578,14 +601,14 @@ The `type` field in error responses can be used for programmatic error handling:
    - Sets `kyc_status` to `'pending'`
    - Sets `kyc_submitted_at` to current timestamp
 
-3. **Check KYC Status**:
+4. **Check KYC Status**:
    ```
    GET /users/me/profile
    Headers: x-api-key, x-telegram-user-id
    ```
    - Returns user profile with current `kyc_status`
 
-4. **Admin Reviews KYC** (Admin only):
+5. **Admin Reviews KYC** (Admin only):
    ```
    POST /users/:id/kyc/review
    Headers: x-api-key, x-telegram-user-id
